@@ -1,16 +1,13 @@
-# 同舟 · 本地基础设施
+# 同舟 · 基础设施
 #
-# 用法：
-#   docker compose up -d        # 起 Postgres
-#   docker compose down -v      # 干净停掉(连数据卷一起删)
+# 本地开发：
+#   docker compose up -d postgres   # 只起数据库
 #
-# 默认账号(api/.env.example 的 DATABASE_URL 已对齐):
-#   user: tongzhou / password: tongzhou / db: tongzhou / port: 5432
+# 生产（服务器上）：
+#   docker compose up -d --build    # 构建并启动所有服务
+#   docker compose down -v          # 干净停掉（连数据卷一起删）
 #
-# 测试 RLS：
-#   docker compose exec postgres psql -U tongzhou -d tongzhou \
-#     -c "SELECT set_config('app.tenant_id', 'fake', false); SELECT * FROM tracks;"
-#   → 应返回 0 行(RLS 策略命中,fake tenant 看不到任何 track)
+# 生产环境需要在 api/.env 中配置正式参数（参考 api/.env.example）。
 
 services:
   postgres:
@@ -29,11 +26,42 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
 
-  # 可选：V0 暂不上 redis,留口
+  api:
+    build:
+      context: ./api
+    container_name: tongzhou-api
+    env_file:
+      - ./api/.env
+    ports:
+      - "4100:4100"
+    volumes:
+      - api-data:/app/data
+      - api-uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ./app
+    container_name: tongzhou-app
+    environment:
+      - API_BASE=http://api:4100
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # 可选：V0 暂不上 redis，留口
   # redis:
   #   image: redis:7-alpine
   #   ports: ["6379:6379"]
 
 volumes:
   tz-pg-data:
+  api-data:
+  api-uploads:
