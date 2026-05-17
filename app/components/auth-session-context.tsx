@@ -47,7 +47,9 @@ export function useAuthSession() {
     return {
       apiBase: null,
       session: null,
-      setSession: (() => undefined) as Dispatch<SetStateAction<AuthSession | null>>,
+      setSession: (() => undefined) as Dispatch<
+        SetStateAction<AuthSession | null>
+      >,
     };
   }
   return value;

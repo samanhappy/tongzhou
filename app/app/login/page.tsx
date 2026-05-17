@@ -8,6 +8,7 @@ export default async function LoginPage({
 }) {
   const { base } = getApiRuntimeConfig();
   const params = await searchParams;
-  const nextHref = typeof params?.next === "string" ? params.next : "/app/dashboard";
+  const nextHref =
+    typeof params?.next === "string" ? params.next : "/app/dashboard";
   return <AuthEntry mode="login" apiBase={base} nextHref={nextHref} />;
 }

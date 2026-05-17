@@ -114,7 +114,11 @@ export type ApiMember = {
 };
 
 export type ApiMeter = {
-  key: "members.active_count" | "courses.count" | "storage.bytes" | "playback.minutes";
+  key:
+    | "members.active_count"
+    | "courses.count"
+    | "storage.bytes"
+    | "playback.minutes";
   name: string;
   value: number;
   max: number;
@@ -164,11 +168,16 @@ export async function fetchTracks(): Promise<ApiTrack[]> {
   return tracks;
 }
 
-export async function fetchTrack(id: string): Promise<{ track: ApiTrack; lessons: ApiLesson[] }> {
+export async function fetchTrack(
+  id: string,
+): Promise<{ track: ApiTrack; lessons: ApiLesson[] }> {
   return call<{ track: ApiTrack; lessons: ApiLesson[] }>(`/api/tracks/${id}`);
 }
 
-export async function fetchMembers(): Promise<{ members: ApiMember[]; activeCount: number }> {
+export async function fetchMembers(): Promise<{
+  members: ApiMember[];
+  activeCount: number;
+}> {
   return call<{ members: ApiMember[]; activeCount: number }>("/api/members");
 }
 
@@ -184,7 +193,11 @@ export async function fetchUploads(): Promise<ApiUpload[]> {
 
 // 学员侧（公开，无需 tenant header）
 export async function fetchPublicLanding(slug: string): Promise<{
-  tenant: ApiTenant & { tagline: string; theme_hue: number; group_link: string };
+  tenant: ApiTenant & {
+    tagline: string;
+    theme_hue: number;
+    group_link: string;
+  };
   track: ApiTrack | null;
   lessons: ApiLesson[];
 }> {

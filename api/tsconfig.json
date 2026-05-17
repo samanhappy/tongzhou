@@ -14,9 +14,8 @@
     "noEmit": true,
     "allowJs": false,
     "verbatimModuleSyntax": false,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*", "scripts/**/*", "tests/**/*", "vitest.config.ts"],

@@ -43,7 +43,9 @@ export function sessionCookie(response: {
   const header = response.headers["set-cookie"];
   const raw = Array.isArray(header) ? header[0] : header;
   if (!raw) {
-    throw new Error(`missing set-cookie header: ${JSON.stringify(response.headers)}`);
+    throw new Error(
+      `missing set-cookie header: ${JSON.stringify(response.headers)}`,
+    );
   }
   const text = String(raw);
   return text.split(";", 1)[0] ?? text;
@@ -51,7 +53,12 @@ export function sessionCookie(response: {
 
 export async function registerOwner(
   app: FastifyInstance,
-  input?: Partial<{ email: string; password: string; slug: string; name: string }>,
+  input?: Partial<{
+    email: string;
+    password: string;
+    slug: string;
+    name: string;
+  }>,
 ): Promise<RegisteredOwner> {
   const slug = input?.slug ?? uniqueSlug("space");
   const email = input?.email ?? `${slug}@example.com`;
@@ -68,7 +75,9 @@ export async function registerOwner(
     throw new Error(`register failed: ${response.statusCode} ${response.body}`);
   }
 
-  const body = responseJson<RegisteredOwner>(response as unknown as { body: string });
+  const body = responseJson<RegisteredOwner>(
+    response as unknown as { body: string },
+  );
 
   return {
     ...body,
@@ -91,12 +100,14 @@ export async function createTrack(
   });
 
   if (response.statusCode !== 200) {
-    throw new Error(`create track failed: ${response.statusCode} ${response.body}`);
+    throw new Error(
+      `create track failed: ${response.statusCode} ${response.body}`,
+    );
   }
 
-  return responseJson<{ track: { id: string; slug: string; title: string; status: string } }>(
-    response as unknown as { body: string },
-  ).track;
+  return responseJson<{
+    track: { id: string; slug: string; title: string; status: string };
+  }>(response as unknown as { body: string }).track;
 }
 
 export async function createLesson(
@@ -120,7 +131,9 @@ export async function createLesson(
   });
 
   if (response.statusCode !== 200) {
-    throw new Error(`create lesson failed: ${response.statusCode} ${response.body}`);
+    throw new Error(
+      `create lesson failed: ${response.statusCode} ${response.body}`,
+    );
   }
 
   return responseJson<{

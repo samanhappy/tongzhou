@@ -17,15 +17,21 @@ export type Tenant = {
 };
 
 export async function getBySlug(slug: string): Promise<Tenant | undefined> {
-  return getDb().prepare(`SELECT * FROM tenants WHERE slug = ?`).get<Tenant>([slug]);
+  return getDb()
+    .prepare(`SELECT * FROM tenants WHERE slug = ?`)
+    .get<Tenant>([slug]);
 }
 
 export async function getById(id: string): Promise<Tenant | undefined> {
-  return getDb().prepare(`SELECT * FROM tenants WHERE id = ?`).get<Tenant>([id]);
+  return getDb()
+    .prepare(`SELECT * FROM tenants WHERE id = ?`)
+    .get<Tenant>([id]);
 }
 
 export async function listAll(): Promise<Tenant[]> {
-  return getDb().prepare(`SELECT * FROM tenants ORDER BY created_at DESC`).all<Tenant>();
+  return getDb()
+    .prepare(`SELECT * FROM tenants ORDER BY created_at DESC`)
+    .all<Tenant>();
 }
 
 export async function create(input: {
@@ -57,7 +63,12 @@ export async function create(input: {
 
 export async function update(
   id: string,
-  patch: Partial<Pick<Tenant, "slug" | "name" | "tagline" | "theme_hue" | "group_link" | "plan">>,
+  patch: Partial<
+    Pick<
+      Tenant,
+      "slug" | "name" | "tagline" | "theme_hue" | "group_link" | "plan"
+    >
+  >,
 ): Promise<Tenant | undefined> {
   const fields: string[] = [];
   const values: (string | number)[] = [];

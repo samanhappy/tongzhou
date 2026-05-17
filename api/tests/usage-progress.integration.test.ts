@@ -44,7 +44,9 @@ describe("usage recompute and learner progress", () => {
       durationText: "10:00",
     });
 
-    const { create: createUpload } = await import("../src/modules/uploads/repo.js");
+    const { create: createUpload } = await import(
+      "../src/modules/uploads/repo.js"
+    );
     await createUpload(owner.tenant.id, {
       filename: "lesson-1.mp4",
       mime: "video/mp4",
@@ -65,7 +67,12 @@ describe("usage recompute and learner progress", () => {
     const secondProgress = await app.inject({
       method: "POST",
       url: `/api/x/${owner.tenant.slug}/progress`,
-      payload: { lessonId: lesson.id, watchedSec: 240, completed: true, anonToken: "anon-1" },
+      payload: {
+        lessonId: lesson.id,
+        watchedSec: 240,
+        completed: true,
+        anonToken: "anon-1",
+      },
     });
     expect(secondProgress.statusCode).toBe(200);
 
@@ -105,7 +112,9 @@ describe("usage recompute and learner progress", () => {
       }>;
     }>(recompute).meters;
 
-    expect(Object.fromEntries(meters.map((meter) => [meter.key, meter.value]))).toMatchObject({
+    expect(
+      Object.fromEntries(meters.map((meter) => [meter.key, meter.value])),
+    ).toMatchObject({
       "members.active_count": 1,
       "courses.count": 1,
       "storage.bytes": 0.5,

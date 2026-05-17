@@ -66,7 +66,8 @@ export async function buildServer(): Promise<FastifyInstance> {
       if (!abs.startsWith(path.resolve(config.storage.localDir))) {
         return reply.code(400).send({ error: "bad path" });
       }
-      if (!fs.existsSync(abs)) return reply.code(404).send({ error: "not found" });
+      if (!fs.existsSync(abs))
+        return reply.code(404).send({ error: "not found" });
       const stream = fs.createReadStream(abs);
       return reply.send(stream);
     });

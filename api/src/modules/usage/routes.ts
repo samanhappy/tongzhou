@@ -17,7 +17,12 @@ export async function registerUsageRoutes(app: FastifyInstance) {
   // 学员侧心跳：累加 playback.minutes
   app.post<{
     Params: { slug: string };
-    Body: { lessonId: string; deltaSec: number; anonToken?: string; memberId?: string };
+    Body: {
+      lessonId: string;
+      deltaSec: number;
+      anonToken?: string;
+      memberId?: string;
+    };
   }>("/api/x/:slug/heartbeat", async (req, reply) => {
     const { getBySlug } = await import("../tenants/repo.js");
     const t = await getBySlug(req.params.slug);

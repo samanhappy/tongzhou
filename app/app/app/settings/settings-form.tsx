@@ -35,19 +35,19 @@ function Field({
   return (
     <div>
       <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>{label}</div>
-        {desc && <div style={{ fontSize: 11, color: "var(--ink-3)" }}>{desc}</div>}
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
+          {label}
+        </div>
+        {desc && (
+          <div style={{ fontSize: 11, color: "var(--ink-3)" }}>{desc}</div>
+        )}
       </div>
       {children}
     </div>
   );
 }
 
-export function SettingsForm({
-  initial,
-}: {
-  initial: TenantForm;
-}) {
+export function SettingsForm({ initial }: { initial: TenantForm }) {
   const router = useRouter();
   const { apiBase, session, setSession } = useAuthSession();
   const [form, setForm] = useState<TenantForm>(initial);
@@ -88,7 +88,9 @@ export function SettingsForm({
     try {
       if (!apiBase) {
         setForm((current) => ({ ...current, slug: payload.slug }));
-        setNotice("当前是离线演示模式：已在本页预览中更新，但不会持久写入后端。");
+        setNotice(
+          "当前是离线演示模式：已在本页预览中更新，但不会持久写入后端。",
+        );
         return;
       }
 
@@ -127,10 +129,15 @@ export function SettingsForm({
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 28 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-        <Field label="Logo" desc="V0 当前以字标展示空间品牌；后续可扩展独立 logo 文件。">
+        <Field
+          label="Logo"
+          desc="V0 当前以字标展示空间品牌；后续可扩展独立 logo 文件。"
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <XCMark size={64} color={theme.hex} />
-            <div style={{ fontSize: 11, color: "var(--ink-3)", lineHeight: 1.7 }}>
+            <div
+              style={{ fontSize: 11, color: "var(--ink-3)", lineHeight: 1.7 }}
+            >
               <div>当前用醒春阁字标作为空间头像。</div>
               <div>这块不再放假按钮了，先诚实一点 😌</div>
             </div>
@@ -152,7 +159,10 @@ export function SettingsForm({
             className="tz-input"
             value={form.tagline}
             onChange={(event) =>
-              setForm((current) => ({ ...current, tagline: event.target.value }))
+              setForm((current) => ({
+                ...current,
+                tagline: event.target.value,
+              }))
             }
           />
         </Field>
@@ -165,7 +175,9 @@ export function SettingsForm({
                 <button
                   key={th.hex}
                   type="button"
-                  onClick={() => setForm((current) => ({ ...current, themeHue: th.hue }))}
+                  onClick={() =>
+                    setForm((current) => ({ ...current, themeHue: th.hue }))
+                  }
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -180,8 +192,17 @@ export function SettingsForm({
                     cursor: "pointer",
                   }}
                 >
-                  <div style={{ width: 28, height: 28, borderRadius: 999, background: th.hex }} />
-                  <span style={{ fontSize: 10.5, color: "var(--ink-2)" }}>{th.name}</span>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 999,
+                      background: th.hex,
+                    }}
+                  />
+                  <span style={{ fontSize: 10.5, color: "var(--ink-2)" }}>
+                    {th.name}
+                  </span>
                 </button>
               );
             })}
@@ -232,7 +253,10 @@ export function SettingsForm({
             className="tz-input"
             value={form.groupLink}
             onChange={(event) =>
-              setForm((current) => ({ ...current, groupLink: event.target.value }))
+              setForm((current) => ({
+                ...current,
+                groupLink: event.target.value,
+              }))
             }
             placeholder="https://..."
           />
@@ -274,7 +298,12 @@ export function SettingsForm({
           >
             {saving ? "保存中…" : "保存修改"}
           </button>
-          <button type="button" className="tz-btn" onClick={reset} disabled={saving}>
+          <button
+            type="button"
+            className="tz-btn"
+            onClick={reset}
+            disabled={saving}
+          >
             取消
           </button>
         </div>
@@ -295,7 +324,10 @@ export function SettingsForm({
         >
           <div style={{ padding: "30px 22px 12px", textAlign: "center" }}>
             <XCMark size={48} color={theme.hex} />
-            <div className="tz-serif" style={{ fontSize: 18, fontWeight: 500, marginTop: 10 }}>
+            <div
+              className="tz-serif"
+              style={{ fontSize: 18, fontWeight: 500, marginTop: 10 }}
+            >
               {form.name}
             </div>
             <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>
@@ -303,27 +335,38 @@ export function SettingsForm({
             </div>
           </div>
           <div style={{ padding: "0 16px 16px" }}>
-            <div className="tz-serif" style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
+            <div
+              className="tz-serif"
+              style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}
+            >
               七天成长计划 · 习作启蒙
             </div>
-            <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginBottom: 12 }}>
+            <div
+              style={{
+                fontSize: 10.5,
+                color: "var(--ink-3)",
+                marginBottom: 12,
+              }}
+            >
               8 节 · 62 分钟
             </div>
-            {["开篇·一支笔之外", "第一日·见我", "第二日·见物"].map((title, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 0",
-                  borderTop: "1px solid var(--paper-line)",
-                }}
-              >
-                <I.playC size={16} style={{ color: theme.hex }} />
-                <span style={{ fontSize: 12 }}>{title}</span>
-              </div>
-            ))}
+            {["开篇·一支笔之外", "第一日·见我", "第二日·见物"].map(
+              (title, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 0",
+                    borderTop: "1px solid var(--paper-line)",
+                  }}
+                >
+                  <I.playC size={16} style={{ color: theme.hex }} />
+                  <span style={{ fontSize: 12 }}>{title}</span>
+                </div>
+              ),
+            )}
             <button
               type="button"
               style={{

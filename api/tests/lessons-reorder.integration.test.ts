@@ -29,9 +29,15 @@ describe("lesson reorder persistence", () => {
       title: "Drag Course",
     });
 
-    const first = await createLesson(app, owner.cookie, track.id, { title: "第一课" });
-    const second = await createLesson(app, owner.cookie, track.id, { title: "第二课" });
-    const third = await createLesson(app, owner.cookie, track.id, { title: "第三课" });
+    const first = await createLesson(app, owner.cookie, track.id, {
+      title: "第一课",
+    });
+    const second = await createLesson(app, owner.cookie, track.id, {
+      title: "第二课",
+    });
+    const third = await createLesson(app, owner.cookie, track.id, {
+      title: "第三课",
+    });
 
     const reorder = await app.inject({
       method: "POST",
@@ -42,7 +48,9 @@ describe("lesson reorder persistence", () => {
 
     expect(reorder.statusCode).toBe(200);
     expect(
-      responseJson<{ lessons: Array<{ id: string }> }>(reorder).lessons.map((lesson) => lesson.id),
+      responseJson<{ lessons: Array<{ id: string }> }>(reorder).lessons.map(
+        (lesson) => lesson.id,
+      ),
     ).toEqual([third.id, first.id, second.id]);
 
     const detail = await app.inject({
@@ -53,7 +61,9 @@ describe("lesson reorder persistence", () => {
 
     expect(detail.statusCode).toBe(200);
     expect(
-      responseJson<{ lessons: Array<{ id: string }> }>(detail).lessons.map((lesson) => lesson.id),
+      responseJson<{ lessons: Array<{ id: string }> }>(detail).lessons.map(
+        (lesson) => lesson.id,
+      ),
     ).toEqual([third.id, first.id, second.id]);
   });
 });

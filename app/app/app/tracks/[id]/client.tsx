@@ -44,7 +44,7 @@ export function CourseEditClient({ initial }: { initial: Lesson[] }) {
             return { ...it, progress: Math.min(100, (it.progress ?? 0) + 0.4) };
           }
           return it;
-        })
+        }),
       );
     }, 220);
     return () => clearInterval(id);
@@ -104,7 +104,10 @@ export function CourseEditClient({ initial }: { initial: Lesson[] }) {
         <I.upload size={16} style={{ color: "var(--accent)" }} />
         <span>把视频拖到这里上传 · 单文件 ≤ 2 GB · OSS 直传</span>
         <span style={{ color: "var(--ink-4)" }}>—</span>
-        <button className="tz-btn" style={{ padding: "5px 10px", fontSize: 12 }}>
+        <button
+          className="tz-btn"
+          style={{ padding: "5px 10px", fontSize: 12 }}
+        >
           选择文件
         </button>
       </div>
@@ -142,7 +145,11 @@ function LessonRow({
         gap: 14,
         alignItems: "center",
         padding: "12px 14px",
-        background: dragging ? "#fff" : dropTarget ? "var(--accent-soft)" : "#fff",
+        background: dragging
+          ? "#fff"
+          : dropTarget
+            ? "var(--accent-soft)"
+            : "#fff",
         border: dropTarget
           ? "1px dashed var(--accent)"
           : "1px solid var(--paper-edge)",

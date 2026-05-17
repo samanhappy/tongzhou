@@ -61,9 +61,11 @@ export function createTencentVodVideo(cfg: VodConfig): Video {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore  SDK 没有完整 d.ts
     const mod = await import("tencentcloud-sdk-nodejs-vod");
-    const VodClient = (mod as unknown as {
-      vod: { v20180717: { Client: new (cfg: unknown) => unknown } };
-    }).vod.v20180717.Client;
+    const VodClient = (
+      mod as unknown as {
+        vod: { v20180717: { Client: new (cfg: unknown) => unknown } };
+      }
+    ).vod.v20180717.Client;
     return new VodClient({
       credential: { secretId, secretKey },
       region,
@@ -74,7 +76,10 @@ export function createTencentVodVideo(cfg: VodConfig): Video {
         Filters?: string[];
         SubAppId?: number;
       }) => Promise<{ MediaInfoSet: VodMediaInfo[] }>;
-      DeleteMedia: (req: { FileId: string; SubAppId?: number }) => Promise<unknown>;
+      DeleteMedia: (req: {
+        FileId: string;
+        SubAppId?: number;
+      }) => Promise<unknown>;
     };
   }
 
@@ -93,24 +98,26 @@ export function createTencentVodVideo(cfg: VodConfig): Video {
     try {
       // ApplyUpload — 拿到上传 COS 签名
       const client = await getClient();
-      const apply = (client as unknown as {
-        ApplyUpload: (req: {
-          MediaType: string;
-          MediaName?: string;
-          SubAppId?: number;
-        }) => Promise<{
-          VodSessionKey: string;
-          MediaStoragePath: string;
-          StorageBucket: string;
-          StorageRegion: string;
-          TempCertificate: {
-            SecretId: string;
-            SecretKey: string;
-            Token: string;
-            ExpiredTime: number;
-          };
-        }>;
-      }).ApplyUpload;
+      const apply = (
+        client as unknown as {
+          ApplyUpload: (req: {
+            MediaType: string;
+            MediaName?: string;
+            SubAppId?: number;
+          }) => Promise<{
+            VodSessionKey: string;
+            MediaStoragePath: string;
+            StorageBucket: string;
+            StorageRegion: string;
+            TempCertificate: {
+              SecretId: string;
+              SecretKey: string;
+              Token: string;
+              ExpiredTime: number;
+            };
+          }>;
+        }
+      ).ApplyUpload;
       const mediaType = inferMediaType(args.filename);
       const applyRes = await apply({
         MediaType: mediaType,
@@ -142,12 +149,14 @@ export function createTencentVodVideo(cfg: VodConfig): Video {
       });
 
       // CommitUpload — 提交转码
-      const commit = (client as unknown as {
-        CommitUpload: (req: {
-          VodSessionKey: string;
-          SubAppId?: number;
-        }) => Promise<{ FileId: string; MediaUrl: string }>;
-      }).CommitUpload;
+      const commit = (
+        client as unknown as {
+          CommitUpload: (req: {
+            VodSessionKey: string;
+            SubAppId?: number;
+          }) => Promise<{ FileId: string; MediaUrl: string }>;
+        }
+      ).CommitUpload;
       const commitRes = await commit({
         VodSessionKey: applyRes.VodSessionKey,
         SubAppId: subAppId,
@@ -216,7 +225,11 @@ function inferMediaType(filename: string): string {
  * 算法: t=hex(expireTs); sign=md5(KEY + path + t)
  * https://cloud.tencent.com/document/product/266/14048
  */
-function signKeyAntiTheft(url: string, key: string, expiresSec: number): string {
+function signKeyAntiTheft(
+  url: string,
+  key: string,
+  expiresSec: number,
+): string {
   const u = new URL(url);
   const path = u.pathname;
   const expireTs = Math.floor(Date.now() / 1000) + expiresSec;

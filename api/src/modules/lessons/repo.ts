@@ -20,7 +20,10 @@ export type Lesson = {
   updated_at: number;
 };
 
-export async function listByTrack(tenantId: string, trackId: string): Promise<Lesson[]> {
+export async function listByTrack(
+  tenantId: string,
+  trackId: string,
+): Promise<Lesson[]> {
   return getDb()
     .prepare(
       `SELECT * FROM lessons WHERE tenant_id = ? AND track_id = ? ORDER BY position, created_at`,
@@ -28,7 +31,10 @@ export async function listByTrack(tenantId: string, trackId: string): Promise<Le
     .all<Lesson>([tenantId, trackId]);
 }
 
-export async function getById(tenantId: string, id: string): Promise<Lesson | undefined> {
+export async function getById(
+  tenantId: string,
+  id: string,
+): Promise<Lesson | undefined> {
   return getDb()
     .prepare(`SELECT * FROM lessons WHERE tenant_id = ? AND id = ?`)
     .get<Lesson>([tenantId, id]);
@@ -79,7 +85,15 @@ export async function update(
   patch: Partial<
     Pick<
       Lesson,
-      "title" | "summary" | "position" | "duration_sec" | "duration_text" | "video_id" | "status" | "views" | "progress"
+      | "title"
+      | "summary"
+      | "position"
+      | "duration_sec"
+      | "duration_text"
+      | "video_id"
+      | "status"
+      | "views"
+      | "progress"
     >
   >,
 ): Promise<Lesson | undefined> {
@@ -95,7 +109,9 @@ export async function update(
   values.push(Date.now());
   values.push(tenantId, id);
   await getDb()
-    .prepare(`UPDATE lessons SET ${fields.join(", ")} WHERE tenant_id = ? AND id = ?`)
+    .prepare(
+      `UPDATE lessons SET ${fields.join(", ")} WHERE tenant_id = ? AND id = ?`,
+    )
     .run(values);
   return getById(tenantId, id);
 }
@@ -107,7 +123,11 @@ export async function remove(tenantId: string, id: string): Promise<void> {
 }
 
 /** 整组 position 写回(拖拽排序) — 用 async 事务 */
-export async function reorder(tenantId: string, trackId: string, orderedIds: string[]): Promise<void> {
+export async function reorder(
+  tenantId: string,
+  trackId: string,
+  orderedIds: string[],
+): Promise<void> {
   const db = getDb();
   await db.transaction(async () => {
     for (let i = 0; i < orderedIds.length; i++) {

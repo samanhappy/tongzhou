@@ -4,7 +4,6 @@
 // 否则回退到 lib/mock.ts。
 // roadmap 中"课程"= Track。V0 隐藏 Stage 层，UI 只展示 Course / Lesson。
 
-import Link from "next/link";
 import { CreatorShell } from "@/components/shell";
 import { SourceChip } from "@/components/source-chip";
 import { getSourceLabel, getTracks } from "@/lib/source";
@@ -16,11 +15,19 @@ export default async function TracksPage() {
 
   return (
     <CreatorShell title="课程" breadcrumb={["醒春阁", "交付"]}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 14 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          marginTop: -10,
+          marginBottom: 14,
+        }}
+      >
         <SourceChip source={source} />
       </div>
 
-      <TracksClient initialTracks={tracks} source={source} />
+      <TracksClient initialTracks={tracks} />
     </CreatorShell>
   );
 }

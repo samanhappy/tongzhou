@@ -8,7 +8,8 @@ export async function registerTenantRoutes(app: FastifyInstance) {
     async (req) => {
       const { slug, name } = req.body ?? {};
       if (!slug || !name) throw new HttpError(400, "slug & name required");
-      if (await repo.getBySlug(slug)) throw new HttpError(409, "slug already taken");
+      if (await repo.getBySlug(slug))
+        throw new HttpError(409, "slug already taken");
       const t = await repo.create({ slug, name });
       return { tenant: t };
     },

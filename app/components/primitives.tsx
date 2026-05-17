@@ -6,7 +6,13 @@ import type { CSSProperties, ReactNode } from "react";
 // ─────────────────────────────────────────────
 // 品牌印 — 同舟
 // ─────────────────────────────────────────────
-export function TZMark({ size = 24, color }: { size?: number; color?: string }) {
+export function TZMark({
+  size = 24,
+  color,
+}: {
+  size?: number;
+  color?: string;
+}) {
   return (
     <div
       style={{
@@ -33,7 +39,13 @@ export function TZMark({ size = 24, color }: { size?: number; color?: string }) 
 }
 
 // 演示创作者：醒春阁
-export function XCMark({ size = 24, color }: { size?: number; color?: string }) {
+export function XCMark({
+  size = 24,
+  color,
+}: {
+  size?: number;
+  color?: string;
+}) {
   return (
     <div
       style={{
@@ -120,7 +132,8 @@ export function Bar({
   danger?: boolean;
 }) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
-  const c = danger && pct > 80 ? "var(--danger)" : pct > 80 ? "var(--warn)" : color;
+  const c =
+    danger && pct > 80 ? "var(--danger)" : pct > 80 ? "var(--warn)" : color;
   return (
     <div
       style={{
@@ -162,13 +175,25 @@ export function Sparkline({
   const min = Math.min(...values, 0);
   const span = max - min || 1;
   const step = w / (values.length - 1);
-  const pts = values.map<[number, number]>((v, i) => [i * step, h - ((v - min) / span) * (h - 4) - 2]);
-  const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const pts = values.map<[number, number]>((v, i) => [
+    i * step,
+    h - ((v - min) / span) * (h - 4) - 2,
+  ]);
+  const d = pts
+    .map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1))
+    .join(" ");
   const dArea = d + ` L ${w} ${h} L 0 ${h} Z`;
   return (
     <svg width={w} height={h} style={{ display: "block" }}>
       <path d={dArea} fill={color} opacity="0.12" />
-      <path d={d} stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={d}
+        stroke={color}
+        strokeWidth="1.5"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -229,9 +254,25 @@ export function SectionLabel({
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-        {stamp && <span className="tz-stamp" style={{ alignSelf: "center" }}>{stamp}</span>}
-        <h3 className="tz-serif" style={{ margin: 0, fontSize: 16, fontWeight: 500, color: "var(--ink)" }}>{title}</h3>
-        {sub && <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{sub}</span>}
+        {stamp && (
+          <span className="tz-stamp" style={{ alignSelf: "center" }}>
+            {stamp}
+          </span>
+        )}
+        <h3
+          className="tz-serif"
+          style={{
+            margin: 0,
+            fontSize: 16,
+            fontWeight: 500,
+            color: "var(--ink)",
+          }}
+        >
+          {title}
+        </h3>
+        {sub && (
+          <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{sub}</span>
+        )}
       </div>
       {right}
     </div>
@@ -239,7 +280,13 @@ export function SectionLabel({
 }
 
 // 通用 Heading 标记（书卷标签）
-export function Heading({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+export function Heading({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
   return (
     <div
       style={{

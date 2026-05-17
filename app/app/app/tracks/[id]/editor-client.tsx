@@ -100,7 +100,9 @@ export function TrackEditorClient({
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [lessonDrafts, setLessonDrafts] = useState<Record<string, LessonDraft>>({});
+  const [lessonDrafts, setLessonDrafts] = useState<Record<string, LessonDraft>>(
+    {},
+  );
   const [newLesson, setNewLesson] = useState<LessonDraft>(emptyDraft());
   const [showNewLesson, setShowNewLesson] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -158,7 +160,11 @@ export function TrackEditorClient({
         return;
       }
 
-      const { track: nextTrack } = await updateTrack(apiBase, initialTrack.id, payload);
+      const { track: nextTrack } = await updateTrack(
+        apiBase,
+        initialTrack.id,
+        payload,
+      );
       setTrack({
         slug: nextTrack.slug,
         title: nextTrack.title,
@@ -426,7 +432,11 @@ export function TrackEditorClient({
     }
 
     try {
-      await reorderLessons(apiBase, initialTrack.id, next.map((lesson) => lesson.id));
+      await reorderLessons(
+        apiBase,
+        initialTrack.id,
+        next.map((lesson) => lesson.id),
+      );
       setNotice("课时顺序已保存。");
       router.refresh();
     } catch (err) {
@@ -447,48 +457,141 @@ export function TrackEditorClient({
           <div style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
             <Placeholder w={88} h={88} radius={6} label="课程封面" />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
                 <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                   课程标题
-                  <input className="tz-input" value={track.title} onChange={(event) => setTrack((current) => ({ ...current, title: event.target.value }))} />
+                  <input
+                    className="tz-input"
+                    value={track.title}
+                    onChange={(event) =>
+                      setTrack((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
                 <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                   副标题
-                  <input className="tz-input" value={track.subtitle} onChange={(event) => setTrack((current) => ({ ...current, subtitle: event.target.value }))} />
+                  <input
+                    className="tz-input"
+                    value={track.subtitle}
+                    onChange={(event) =>
+                      setTrack((current) => ({
+                        ...current,
+                        subtitle: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: 10, marginBottom: 10 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 220px",
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
                 <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                   一句话简介
-                  <input className="tz-input" value={track.oneLine} onChange={(event) => setTrack((current) => ({ ...current, oneLine: event.target.value }))} />
+                  <input
+                    className="tz-input"
+                    value={track.oneLine}
+                    onChange={(event) =>
+                      setTrack((current) => ({
+                        ...current,
+                        oneLine: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
                 <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                   课程 slug
-                  <input className="tz-input" value={track.slug} onChange={(event) => setTrack((current) => ({ ...current, slug: suggestSlug(event.target.value) }))} />
+                  <input
+                    className="tz-input"
+                    value={track.slug}
+                    onChange={(event) =>
+                      setTrack((current) => ({
+                        ...current,
+                        slug: suggestSlug(event.target.value),
+                      }))
+                    }
+                  />
                 </label>
               </div>
-              <div style={{ display: "flex", gap: 22, fontSize: 11.5, marginBottom: 12, flexWrap: "wrap" }}>
-                <span><b style={{ fontVariantNumeric: "tabular-nums" }}>{lessons.length}</b> <span style={{ color: "var(--ink-3)" }}>课时</span></span>
-                <span><b style={{ fontVariantNumeric: "tabular-nums" }}>{initialTrack.totalMinutes} min</b> <span style={{ color: "var(--ink-3)" }}>总时长</span></span>
-                <span><b style={{ fontVariantNumeric: "tabular-nums" }}>{initialTrack.cumulativeViewers}</b> <span style={{ color: "var(--ink-3)" }}>累计观看人</span></span>
-                <span><b style={{ fontVariantNumeric: "tabular-nums" }}>{initialTrack.completionRate}%</b> <span style={{ color: "var(--ink-3)" }}>完播率</span></span>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 22,
+                  fontSize: 11.5,
+                  marginBottom: 12,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span>
+                  <b style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {lessons.length}
+                  </b>{" "}
+                  <span style={{ color: "var(--ink-3)" }}>课时</span>
+                </span>
+                <span>
+                  <b style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {initialTrack.totalMinutes} min
+                  </b>{" "}
+                  <span style={{ color: "var(--ink-3)" }}>总时长</span>
+                </span>
+                <span>
+                  <b style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {initialTrack.cumulativeViewers}
+                  </b>{" "}
+                  <span style={{ color: "var(--ink-3)" }}>累计观看人</span>
+                </span>
+                <span>
+                  <b style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {initialTrack.completionRate}%
+                  </b>{" "}
+                  <span style={{ color: "var(--ink-3)" }}>完播率</span>
+                </span>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button className="tz-btn" type="button" onClick={() => saveTrack()} disabled={busy}>
+                <button
+                  className="tz-btn"
+                  type="button"
+                  onClick={() => saveTrack()}
+                  disabled={busy}
+                >
                   <I.check size={13} /> 保存修改
                 </button>
                 <button
                   className="tz-btn tz-btn-primary"
                   type="button"
-                  onClick={() => saveTrack(track.status === "published" ? "draft" : "published")}
+                  onClick={() =>
+                    saveTrack(
+                      track.status === "published" ? "draft" : "published",
+                    )
+                  }
                   disabled={busy}
                 >
                   {track.status === "published" ? "转回草稿" : "发布课程"}
                 </button>
-                <button className="tz-btn" type="button" onClick={copyShareLink}>
+                <button
+                  className="tz-btn"
+                  type="button"
+                  onClick={copyShareLink}
+                >
                   <I.copy size={13} /> 复制学员页链接
                 </button>
-                <span className={`tz-chip${track.status === "published" ? " is-accent" : ""}`}>
+                <span
+                  className={`tz-chip${track.status === "published" ? " is-accent" : ""}`}
+                >
                   {track.status === "published" ? "已发布" : "草稿"}
                 </span>
               </div>
@@ -496,8 +599,28 @@ export function TrackEditorClient({
           </div>
         </div>
 
-        {error && <div data-testid="editor-error" className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--danger)" }}>{error}</div>}
-        {notice && <div data-testid="editor-notice" className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--accent-deep)" }}>{notice}</div>}
+        {error && (
+          <div
+            data-testid="editor-error"
+            className="tz-card"
+            style={{ padding: 12, marginBottom: 12, color: "var(--danger)" }}
+          >
+            {error}
+          </div>
+        )}
+        {notice && (
+          <div
+            data-testid="editor-notice"
+            className="tz-card"
+            style={{
+              padding: 12,
+              marginBottom: 12,
+              color: "var(--accent-deep)",
+            }}
+          >
+            {notice}
+          </div>
+        )}
 
         <SectionLabel
           stamp="时"
@@ -524,7 +647,12 @@ export function TrackEditorClient({
                   data-testid="new-lesson-title"
                   className="tz-input"
                   value={newLesson.title}
-                  onChange={(event) => setNewLesson((current) => ({ ...current, title: event.target.value }))}
+                  onChange={(event) =>
+                    setNewLesson((current) => ({
+                      ...current,
+                      title: event.target.value,
+                    }))
+                  }
                 />
               </label>
               <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
@@ -533,15 +661,32 @@ export function TrackEditorClient({
                   data-testid="new-lesson-summary"
                   className="tz-input"
                   value={newLesson.summary}
-                  onChange={(event) => setNewLesson((current) => ({ ...current, summary: event.target.value }))}
+                  onChange={(event) =>
+                    setNewLesson((current) => ({
+                      ...current,
+                      summary: event.target.value,
+                    }))
+                  }
                 />
               </label>
-              <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <select
                   data-testid="new-lesson-status"
                   className="tz-input"
                   value={newLesson.status}
-                  onChange={(event) => setNewLesson((current) => ({ ...current, status: event.target.value as LessonItem["status"] }))}
+                  onChange={(event) =>
+                    setNewLesson((current) => ({
+                      ...current,
+                      status: event.target.value as LessonItem["status"],
+                    }))
+                  }
                   style={{ maxWidth: 180 }}
                 >
                   <option value="draft">草稿</option>
@@ -551,7 +696,14 @@ export function TrackEditorClient({
                   <option value="failed">失败</option>
                 </select>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button className="tz-btn" type="button" onClick={() => setShowNewLesson(false)} disabled={busy}>取消</button>
+                  <button
+                    className="tz-btn"
+                    type="button"
+                    onClick={() => setShowNewLesson(false)}
+                    disabled={busy}
+                  >
+                    取消
+                  </button>
                   <button
                     data-testid="new-lesson-save"
                     className="tz-btn tz-btn-primary"
@@ -584,15 +736,32 @@ export function TrackEditorClient({
                 onDragOver={(event) => onDragOver(event, index)}
                 onDrop={(event) => void onDrop(event, index)}
                 style={{
-                  border: overIdx === index && dragIdx !== index ? "1px dashed var(--accent)" : "1px solid var(--paper-edge)",
+                  border:
+                    overIdx === index && dragIdx !== index
+                      ? "1px dashed var(--accent)"
+                      : "1px solid var(--paper-edge)",
                   borderRadius: 8,
                   background: "#fff",
                   padding: 14,
                   marginBottom: 8,
                 }}
               >
-                <div style={{ display: "grid", gridTemplateColumns: "20px 64px 1fr 90px 150px 72px", gap: 14, alignItems: "center" }}>
-                  <span style={{ color: "var(--ink-4)", cursor: "grab", display: "flex", justifyContent: "center" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "20px 64px 1fr 90px 150px 72px",
+                    gap: 14,
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "var(--ink-4)",
+                      cursor: "grab",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
                     <I.grip size={16} />
                   </span>
                   <div style={{ position: "relative" }}>
@@ -615,50 +784,175 @@ export function TrackEditorClient({
                     </div>
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                      <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)" }}>{String(index + 1).padStart(2, "0")}</span>
-                      <span data-testid="lesson-card-title" style={{ fontSize: 13.5, fontWeight: 500 }}>{lesson.title}</span>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 2,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--mono)",
+                          fontSize: 10.5,
+                          color: "var(--ink-3)",
+                        }}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span
+                        data-testid="lesson-card-title"
+                        style={{ fontSize: 13.5, fontWeight: 500 }}
+                      >
+                        {lesson.title}
+                      </span>
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--ink-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lesson.summary || "未填写简介"}</div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--ink-3)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {lesson.summary || "未填写简介"}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink-2)", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>
-                    {lesson.status === "published" ? `观看 ${lesson.views ?? 0}` : "—"}
+                  <div
+                    style={{
+                      fontSize: 11.5,
+                      color: "var(--ink-2)",
+                      fontVariantNumeric: "tabular-nums",
+                      textAlign: "right",
+                    }}
+                  >
+                    {lesson.status === "published"
+                      ? `观看 ${lesson.views ?? 0}`
+                      : "—"}
                   </div>
                   <div>
-                    {lesson.status === "published" && <span className="tz-chip is-accent"><I.check size={10} /> 已发布</span>}
-                    {lesson.status === "draft" && <span className="tz-chip">草稿</span>}
-                    {lesson.status === "failed" && <span className="tz-chip">失败</span>}
-                    {(lesson.status === "uploading" || lesson.status === "transcoding") && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontSize: 10.5, color: lesson.status === "uploading" ? "var(--accent-deep)" : "var(--warn)" }}>
-                          {lesson.status === "uploading" ? "上传中" : "转码中"} · {Math.round(lesson.progress ?? 0)}%
+                    {lesson.status === "published" && (
+                      <span className="tz-chip is-accent">
+                        <I.check size={10} /> 已发布
+                      </span>
+                    )}
+                    {lesson.status === "draft" && (
+                      <span className="tz-chip">草稿</span>
+                    )}
+                    {lesson.status === "failed" && (
+                      <span className="tz-chip">失败</span>
+                    )}
+                    {(lesson.status === "uploading" ||
+                      lesson.status === "transcoding") && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 4,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 10.5,
+                            color:
+                              lesson.status === "uploading"
+                                ? "var(--accent-deep)"
+                                : "var(--warn)",
+                          }}
+                        >
+                          {lesson.status === "uploading" ? "上传中" : "转码中"}{" "}
+                          · {Math.round(lesson.progress ?? 0)}%
                         </span>
-                        <Bar value={lesson.progress ?? 0} height={4} color={lesson.status === "uploading" ? "var(--accent)" : "var(--warn)"} />
+                        <Bar
+                          value={lesson.progress ?? 0}
+                          height={4}
+                          color={
+                            lesson.status === "uploading"
+                              ? "var(--accent)"
+                              : "var(--warn)"
+                          }
+                        />
                       </div>
                     )}
                   </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                    <button className="tz-btn tz-btn-ghost" type="button" style={{ padding: 6 }} onClick={() => startEdit(lesson)}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      gap: 2,
+                    }}
+                  >
+                    <button
+                      className="tz-btn tz-btn-ghost"
+                      type="button"
+                      style={{ padding: 6 }}
+                      onClick={() => startEdit(lesson)}
+                    >
                       <I.edit size={13} />
                     </button>
-                    <button className="tz-btn tz-btn-ghost" type="button" style={{ padding: 6 }} onClick={() => void removeLesson(lesson.id)}>
+                    <button
+                      className="tz-btn tz-btn-ghost"
+                      type="button"
+                      style={{ padding: 6 }}
+                      onClick={() => void removeLesson(lesson.id)}
+                    >
                       <I.trash size={13} />
                     </button>
                   </div>
                 </div>
 
                 {editing && (
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--paper-line)", display: "grid", gap: 10 }}>
+                  <div
+                    style={{
+                      marginTop: 12,
+                      paddingTop: 12,
+                      borderTop: "1px solid var(--paper-line)",
+                      display: "grid",
+                      gap: 10,
+                    }}
+                  >
                     <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                       标题
-                      <input className="tz-input" value={draft.title} onChange={(event) => updateDraft(lesson.id, { title: event.target.value })} />
+                      <input
+                        className="tz-input"
+                        value={draft.title}
+                        onChange={(event) =>
+                          updateDraft(lesson.id, { title: event.target.value })
+                        }
+                      />
                     </label>
                     <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                       简介
-                      <input className="tz-input" value={draft.summary} onChange={(event) => updateDraft(lesson.id, { summary: event.target.value })} />
+                      <input
+                        className="tz-input"
+                        value={draft.summary}
+                        onChange={(event) =>
+                          updateDraft(lesson.id, {
+                            summary: event.target.value,
+                          })
+                        }
+                      />
                     </label>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-                      <select className="tz-input" value={draft.status} onChange={(event) => updateDraft(lesson.id, { status: event.target.value as LessonItem["status"] })} style={{ maxWidth: 180 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        alignItems: "center",
+                      }}
+                    >
+                      <select
+                        className="tz-input"
+                        value={draft.status}
+                        onChange={(event) =>
+                          updateDraft(lesson.id, {
+                            status: event.target.value as LessonItem["status"],
+                          })
+                        }
+                        style={{ maxWidth: 180 }}
+                      >
                         <option value="draft">草稿</option>
                         <option value="published">已发布</option>
                         <option value="uploading">上传中</option>
@@ -666,8 +960,22 @@ export function TrackEditorClient({
                         <option value="failed">失败</option>
                       </select>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button className="tz-btn" type="button" onClick={() => setEditingId(null)} disabled={busy}>取消</button>
-                        <button className="tz-btn tz-btn-primary" type="button" onClick={() => void saveLesson(lesson.id)} disabled={busy}>保存</button>
+                        <button
+                          className="tz-btn"
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          disabled={busy}
+                        >
+                          取消
+                        </button>
+                        <button
+                          className="tz-btn tz-btn-primary"
+                          type="button"
+                          onClick={() => void saveLesson(lesson.id)}
+                          disabled={busy}
+                        >
+                          保存
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -696,10 +1004,22 @@ export function TrackEditorClient({
           <I.upload size={16} style={{ color: "var(--accent)" }} />
           <span>把视频拖到这里上传 · 单文件 ≤ 2 GB</span>
           <span style={{ color: "var(--ink-4)" }}>—</span>
-          <button className="tz-btn" type="button" style={{ padding: "5px 10px", fontSize: 12 }} onClick={() => fileInputRef.current?.click()}>
+          <button
+            className="tz-btn"
+            type="button"
+            style={{ padding: "5px 10px", fontSize: 12 }}
+            onClick={() => fileInputRef.current?.click()}
+          >
             选择文件
           </button>
-          <input ref={fileInputRef} type="file" accept="video/*" multiple hidden onChange={(event) => void handleFiles(event.target.files)} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/*"
+            multiple
+            hidden
+            onChange={(event) => void handleFiles(event.target.files)}
+          />
         </div>
       </div>
 
@@ -707,17 +1027,64 @@ export function TrackEditorClient({
         <div className="tz-card" style={{ padding: 14 }}>
           <SectionLabel title="上传队列" sub={`${uploads.length} 条记录`} />
           {uploads.length === 0 ? (
-            <div style={{ fontSize: 11, color: "var(--ink-3)" }}>还没有上传记录，选个视频试试。</div>
+            <div style={{ fontSize: 11, color: "var(--ink-3)" }}>
+              还没有上传记录，选个视频试试。
+            </div>
           ) : (
             uploads.slice(0, 6).map((upload) => (
-              <div key={upload.id} style={{ padding: "10px 0", borderTop: "1px solid var(--paper-line)" }}>
+              <div
+                key={upload.id}
+                style={{
+                  padding: "10px 0",
+                  borderTop: "1px solid var(--paper-line)",
+                }}
+              >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <I.video size={13} style={{ color: "var(--ink-3)" }} />
-                  <span style={{ fontSize: 12, fontWeight: 500, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{upload.name}</span>
-                  <span style={{ fontSize: 10.5, color: "var(--ink-3)", fontVariantNumeric: "tabular-nums" }}>{upload.sizeText}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 500,
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {upload.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      color: "var(--ink-3)",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {upload.sizeText}
+                  </span>
                 </div>
-                <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--ink-3)" }}>
-                  <span style={{ color: upload.phase === "failed" ? "var(--danger)" : upload.phase === "ready" ? "var(--accent-deep)" : "var(--warn)" }}>{uploadLabel(upload.phase)}</span>
+                <div
+                  style={{
+                    marginTop: 6,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 10.5,
+                    color: "var(--ink-3)",
+                  }}
+                >
+                  <span
+                    style={{
+                      color:
+                        upload.phase === "failed"
+                          ? "var(--danger)"
+                          : upload.phase === "ready"
+                            ? "var(--accent-deep)"
+                            : "var(--warn)",
+                    }}
+                  >
+                    {uploadLabel(upload.phase)}
+                  </span>
                   <span>{upload.createdAtLabel}</span>
                 </div>
               </div>
@@ -730,17 +1097,42 @@ export function TrackEditorClient({
           <Toggle label="限时 playAuth" desc="链接 6 小时失效" on />
           <Toggle label="学员手机号水印" desc="斜向 22°, 自动平铺" on />
           <Toggle label="禁右键 / 选择" desc="对常见盗录有限作用" on={false} />
-          <div style={{ marginTop: 8, paddingTop: 10, borderTop: "1px solid var(--paper-line)", fontSize: 11, color: "var(--ink-3)" }}>
+          <div
+            style={{
+              marginTop: 8,
+              paddingTop: 10,
+              borderTop: "1px solid var(--paper-line)",
+              fontSize: 11,
+              color: "var(--ink-3)",
+            }}
+          >
             V0 先保留简化保护策略；学员观看路径不受创作者侧编辑影响。
           </div>
         </div>
 
-        <div className="tz-card" style={{ padding: 14, background: "var(--accent-soft)", border: "1px solid color-mix(in oklch, var(--accent) 20%, transparent)" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 8, color: "var(--accent-deep)", fontSize: 11.5 }}>
+        <div
+          className="tz-card"
+          style={{
+            padding: 14,
+            background: "var(--accent-soft)",
+            border:
+              "1px solid color-mix(in oklch, var(--accent) 20%, transparent)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 8,
+              color: "var(--accent-deep)",
+              fontSize: 11.5,
+            }}
+          >
             <I.sparkle size={14} style={{ marginTop: 1, flex: "0 0 auto" }} />
             <div>
-              <b>现在这页已经是真编辑器了：</b> 课程信息、课时 CRUD、顺序和上传都会走后端；
-              只是 V0 还没引入 Stage 分组和素材跨课程复用。
+              <b>现在这页已经是真编辑器了：</b> 课程信息、课时
+              CRUD、顺序和上传都会走后端； 只是 V0 还没引入 Stage
+              分组和素材跨课程复用。
             </div>
           </div>
         </div>
@@ -749,7 +1141,15 @@ export function TrackEditorClient({
   );
 }
 
-function Toggle({ label, desc, on }: { label: string; desc: string; on: boolean }) {
+function Toggle({
+  label,
+  desc,
+  on,
+}: {
+  label: string;
+  desc: string;
+  on: boolean;
+}) {
   return (
     <div
       style={{
@@ -762,7 +1162,9 @@ function Toggle({ label, desc, on }: { label: string; desc: string; on: boolean 
     >
       <div>
         <div style={{ fontSize: 12, fontWeight: 500 }}>{label}</div>
-        <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 1 }}>{desc}</div>
+        <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 1 }}>
+          {desc}
+        </div>
       </div>
       <div
         style={{
@@ -776,7 +1178,14 @@ function Toggle({ label, desc, on }: { label: string; desc: string; on: boolean 
           justifyContent: on ? "flex-end" : "flex-start",
         }}
       >
-        <div style={{ width: 13, height: 13, borderRadius: 999, background: "#fff" }} />
+        <div
+          style={{
+            width: 13,
+            height: 13,
+            borderRadius: 999,
+            background: "#fff",
+          }}
+        />
       </div>
     </div>
   );

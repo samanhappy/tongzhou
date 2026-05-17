@@ -1,0 +1,11 @@
+**/node_modules/**
+**/.next/**
+**/dist/**
+**/coverage/**
+**/out/**
+**/data/**
+**/uploads/**
+app/playwright-report/**
+app/test-results/**
+roadmap/**
+design/**

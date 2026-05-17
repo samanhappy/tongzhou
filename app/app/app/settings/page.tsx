@@ -15,7 +15,15 @@ export default async function SettingsPage() {
 
   return (
     <CreatorShell title="设置 · 品牌" breadcrumb={[tenant.name, "系统"]}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 14 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          marginTop: -10,
+          marginBottom: 14,
+        }}
+      >
         <SourceChip source={source} />
       </div>
 
@@ -40,8 +48,14 @@ export default async function SettingsPage() {
             style={{
               borderRadius: 0,
               padding: "8px 14px",
-              color: t.active ? "var(--ink)" : t.soon ? "var(--ink-4)" : "var(--ink-3)",
-              borderBottom: t.active ? "2px solid var(--accent)" : "2px solid transparent",
+              color: t.active
+                ? "var(--ink)"
+                : t.soon
+                  ? "var(--ink-4)"
+                  : "var(--ink-3)",
+              borderBottom: t.active
+                ? "2px solid var(--accent)"
+                : "2px solid transparent",
               marginBottom: -1,
               fontWeight: t.active ? 500 : 400,
               display: "inline-flex",
@@ -51,7 +65,15 @@ export default async function SettingsPage() {
           >
             {t.l}
             {t.soon && (
-              <span style={{ fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em" }}>V1</span>
+              <span
+                style={{
+                  fontSize: 9.5,
+                  color: "var(--ink-4)",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                V1
+              </span>
             )}
           </button>
         ))}

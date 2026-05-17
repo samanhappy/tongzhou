@@ -41,25 +41,125 @@ type LessonSeed = {
 };
 
 const LESSONS: LessonSeed[] = [
-  { title: "开篇·一支笔之外", summary: "写作不是技巧，是看世界的方式。", durationText: "08:24", durationSec: 504, status: "published", views: 38 },
-  { title: "第一日·见我", summary: "从一个清晨开始，把第一念落到纸上。", durationText: "09:12", durationSec: 552, status: "published", views: 31 },
-  { title: "第二日·见物", summary: "练习观察一件物，把它写成一篇 300 字短札。", durationText: "11:02", durationSec: 662, status: "published", views: 24 },
-  { title: "第三日·见人", summary: "把今日遇到的一个人写下来——不评价，只描述。", durationText: "—", status: "uploading", progress: 64 },
-  { title: "第四日·见事", summary: "今日的一件事，从五个角度复写。", durationText: "—", status: "transcoding", progress: 38 },
-  { title: "第五日·见念", summary: "心里冒出来的一念，捕住它，落墨。", durationText: "10:30", durationSec: 630, status: "draft", views: 0 },
-  { title: "第六日·见旧", summary: "重读一年前的自己——只写感受，不改。", durationText: "—", status: "failed" },
-  { title: "第七日·见今", summary: "把这七日写成一封给自己的信。", durationText: "12:45", durationSec: 765, status: "draft", views: 0 },
+  {
+    title: "开篇·一支笔之外",
+    summary: "写作不是技巧，是看世界的方式。",
+    durationText: "08:24",
+    durationSec: 504,
+    status: "published",
+    views: 38,
+  },
+  {
+    title: "第一日·见我",
+    summary: "从一个清晨开始，把第一念落到纸上。",
+    durationText: "09:12",
+    durationSec: 552,
+    status: "published",
+    views: 31,
+  },
+  {
+    title: "第二日·见物",
+    summary: "练习观察一件物，把它写成一篇 300 字短札。",
+    durationText: "11:02",
+    durationSec: 662,
+    status: "published",
+    views: 24,
+  },
+  {
+    title: "第三日·见人",
+    summary: "把今日遇到的一个人写下来——不评价，只描述。",
+    durationText: "—",
+    status: "uploading",
+    progress: 64,
+  },
+  {
+    title: "第四日·见事",
+    summary: "今日的一件事，从五个角度复写。",
+    durationText: "—",
+    status: "transcoding",
+    progress: 38,
+  },
+  {
+    title: "第五日·见念",
+    summary: "心里冒出来的一念，捕住它，落墨。",
+    durationText: "10:30",
+    durationSec: 630,
+    status: "draft",
+    views: 0,
+  },
+  {
+    title: "第六日·见旧",
+    summary: "重读一年前的自己——只写感受，不改。",
+    durationText: "—",
+    status: "failed",
+  },
+  {
+    title: "第七日·见今",
+    summary: "把这七日写成一封给自己的信。",
+    durationText: "12:45",
+    durationSec: 765,
+    status: "draft",
+    views: 0,
+  },
 ];
 
 const MEMBERS = [
-  { name: "李 ·· 茜", phone: "138****2204", source: "CSV · 知识星球", bound: true, joinedAt: "5/02" },
-  { name: "周 ·· 屿", phone: "—", source: "邀请短链", bound: false, joinedAt: "5/12" },
-  { name: "陈 ·· 鹿", phone: "139****8810", source: "单加", bound: true, joinedAt: "5/03" },
-  { name: "吴 ·· 默", phone: "186****4119", source: "CSV · 小报童", bound: true, joinedAt: "5/01" },
-  { name: "苏 ·· 砚", phone: "—", source: "邀请短链", bound: false, joinedAt: "5/16" },
-  { name: "顾 ·· 行", phone: "135****0327", source: "单加", bound: true, joinedAt: "4/28" },
-  { name: "卫 ·· 棠", phone: "151****6620", source: "CSV · 知识星球", bound: true, joinedAt: "5/06" },
-  { name: "金 ·· 砚", phone: "153****0044", source: "单加", bound: true, joinedAt: "4/22" },
+  {
+    name: "李 ·· 茜",
+    phone: "138****2204",
+    source: "CSV · 知识星球",
+    bound: true,
+    joinedAt: "5/02",
+  },
+  {
+    name: "周 ·· 屿",
+    phone: "—",
+    source: "邀请短链",
+    bound: false,
+    joinedAt: "5/12",
+  },
+  {
+    name: "陈 ·· 鹿",
+    phone: "139****8810",
+    source: "单加",
+    bound: true,
+    joinedAt: "5/03",
+  },
+  {
+    name: "吴 ·· 默",
+    phone: "186****4119",
+    source: "CSV · 小报童",
+    bound: true,
+    joinedAt: "5/01",
+  },
+  {
+    name: "苏 ·· 砚",
+    phone: "—",
+    source: "邀请短链",
+    bound: false,
+    joinedAt: "5/16",
+  },
+  {
+    name: "顾 ·· 行",
+    phone: "135****0327",
+    source: "单加",
+    bound: true,
+    joinedAt: "4/28",
+  },
+  {
+    name: "卫 ·· 棠",
+    phone: "151****6620",
+    source: "CSV · 知识星球",
+    bound: true,
+    joinedAt: "5/06",
+  },
+  {
+    name: "金 ·· 砚",
+    phone: "153****0044",
+    source: "单加",
+    bound: true,
+    joinedAt: "4/22",
+  },
 ];
 
 async function main() {
@@ -108,7 +208,8 @@ async function seedContent(tenantId: string) {
         durationText: l.durationText,
         status: l.status,
       });
-      if (l.views) await lessonsRepo.update(tenantId, lesson.id, { views: l.views });
+      if (l.views)
+        await lessonsRepo.update(tenantId, lesson.id, { views: l.views });
 
       if (l.status === "published" && l.durationSec) {
         await uploadsRepo.create(tenantId, {

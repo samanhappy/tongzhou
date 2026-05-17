@@ -153,7 +153,10 @@ export function MembersClient({
         setMembers((current) => [...rows.reverse(), ...current]);
         setNotice(`离线演示模式：已临时导入 ${rows.length} 位学员。`);
       } else {
-        const { imported } = await importMembersCsv(apiBase, { csv: trimmed, source: csvSource });
+        const { imported } = await importMembersCsv(apiBase, {
+          csv: trimmed,
+          source: csvSource,
+        });
         setNotice(`已导入 ${imported} 位学员。`);
         router.refresh();
       }
@@ -190,7 +193,8 @@ export function MembersClient({
         <I.member size={18} style={{ color: "var(--accent)" }} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 12.5 }}>
-            <b style={{ fontVariantNumeric: "tabular-nums" }}>{activeCount}</b> 位本月活跃 ·
+            <b style={{ fontVariantNumeric: "tabular-nums" }}>{activeCount}</b>{" "}
+            位本月活跃 ·
             <span style={{ color: "var(--ink-3)" }}> 计入 Freemium 配额 </span>
             <b style={{ fontVariantNumeric: "tabular-nums" }}>{quotaMax}</b>
           </div>
@@ -212,8 +216,20 @@ export function MembersClient({
         </span>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-        <button className="tz-btn" type="button" onClick={() => setPanel(panel === "import" ? null : "import")}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          className="tz-btn"
+          type="button"
+          onClick={() => setPanel(panel === "import" ? null : "import")}
+        >
           <I.csv size={14} /> CSV 导入
         </button>
         <button className="tz-btn" type="button" onClick={copyInviteLink}>
@@ -259,20 +275,46 @@ export function MembersClient({
 
       {panel === "add" && (
         <div className="tz-card" style={{ padding: 14, marginBottom: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 10, alignItems: "end" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr auto",
+              gap: 10,
+              alignItems: "end",
+            }}
+          >
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               姓名
-              <input className="tz-input" value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：李清" />
+              <input
+                className="tz-input"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="例如：李清"
+              />
             </label>
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               手机号
-              <input className="tz-input" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="可选" />
+              <input
+                className="tz-input"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="可选"
+              />
             </label>
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               来源
-              <input className="tz-input" value={source} onChange={(event) => setSource(event.target.value)} />
+              <input
+                className="tz-input"
+                value={source}
+                onChange={(event) => setSource(event.target.value)}
+              />
             </label>
-            <button className="tz-btn tz-btn-primary" type="button" onClick={handleAddMember} disabled={busy}>
+            <button
+              className="tz-btn tz-btn-primary"
+              type="button"
+              onClick={handleAddMember}
+              disabled={busy}
+            >
               {busy ? "保存中…" : "保存"}
             </button>
           </div>
@@ -284,7 +326,11 @@ export function MembersClient({
           <div style={{ display: "grid", gap: 10 }}>
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               导入来源
-              <input className="tz-input" value={csvSource} onChange={(event) => setCsvSource(event.target.value)} />
+              <input
+                className="tz-input"
+                value={csvSource}
+                onChange={(event) => setCsvSource(event.target.value)}
+              />
             </label>
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               CSV 内容（每行：姓名,手机号）
@@ -297,7 +343,12 @@ export function MembersClient({
               />
             </label>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button className="tz-btn tz-btn-primary" type="button" onClick={handleImportMembers} disabled={busy}>
+              <button
+                className="tz-btn tz-btn-primary"
+                type="button"
+                onClick={handleImportMembers}
+                disabled={busy}
+              >
                 {busy ? "导入中…" : "开始导入"}
               </button>
             </div>
@@ -306,17 +357,30 @@ export function MembersClient({
       )}
 
       {error && (
-        <div className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--danger)" }}>
+        <div
+          className="tz-card"
+          style={{ padding: 12, marginBottom: 12, color: "var(--danger)" }}
+        >
           {error}
         </div>
       )}
       {notice && (
-        <div className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--accent-deep)" }}>
+        <div
+          className="tz-card"
+          style={{ padding: 12, marginBottom: 12, color: "var(--accent-deep)" }}
+        >
           {notice}
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 12,
+        }}
+      >
         <button className="tz-btn">
           <I.filter size={13} /> 来源
         </button>
@@ -327,11 +391,15 @@ export function MembersClient({
           <I.filter size={13} /> 课程
         </button>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 11, color: "var(--ink-3)" }}>共 {filtered.length} 位</span>
+        <span style={{ fontSize: 11, color: "var(--ink-3)" }}>
+          共 {filtered.length} 位
+        </span>
       </div>
 
       <div className="tz-card" style={{ overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+        <table
+          style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}
+        >
           <thead>
             <tr
               style={{
@@ -341,35 +409,113 @@ export function MembersClient({
                 letterSpacing: "0.05em",
               }}
             >
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 400 }}>学员</th>
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 400 }}>手机号</th>
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 400 }}>来源</th>
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 400 }}>加入</th>
-              <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 400 }}>课时</th>
-              <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 400 }}>播放分钟</th>
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 400 }}>最近活跃</th>
-              <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 400, width: 80 }}></th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "left",
+                  fontWeight: 400,
+                }}
+              >
+                学员
+              </th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "left",
+                  fontWeight: 400,
+                }}
+              >
+                手机号
+              </th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "left",
+                  fontWeight: 400,
+                }}
+              >
+                来源
+              </th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "left",
+                  fontWeight: 400,
+                }}
+              >
+                加入
+              </th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "right",
+                  fontWeight: 400,
+                }}
+              >
+                课时
+              </th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "right",
+                  fontWeight: 400,
+                }}
+              >
+                播放分钟
+              </th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "left",
+                  fontWeight: 400,
+                }}
+              >
+                最近活跃
+              </th>
+              <th
+                style={{
+                  padding: "10px 14px",
+                  textAlign: "left",
+                  fontWeight: 400,
+                  width: 80,
+                }}
+              ></th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: 40, textAlign: "center", color: "var(--ink-3)", fontSize: 12 }}>
+                <td
+                  colSpan={8}
+                  style={{
+                    padding: 40,
+                    textAlign: "center",
+                    color: "var(--ink-3)",
+                    fontSize: 12,
+                  }}
+                >
                   暂无学员 — 用 CSV 导入或单个添加
                 </td>
               </tr>
             ) : (
               filtered.map((member) => (
-                <tr key={member.id} style={{ borderTop: "1px solid var(--paper-line)" }}>
+                <tr
+                  key={member.id}
+                  style={{ borderTop: "1px solid var(--paper-line)" }}
+                >
                   <td style={{ padding: "11px 14px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 9 }}
+                    >
                       <div
                         style={{
                           width: 26,
                           height: 26,
                           borderRadius: 999,
                           flex: "0 0 auto",
-                          background: member.anonymous ? "var(--paper-deep)" : "var(--accent-ink)",
+                          background: member.anonymous
+                            ? "var(--paper-deep)"
+                            : "var(--accent-ink)",
                           color: member.anonymous ? "var(--ink-3)" : "#fff",
                           fontFamily: "var(--serif)",
                           fontSize: 12,
@@ -381,25 +527,79 @@ export function MembersClient({
                         {member.anonymous ? "?" : member.name[0]}
                       </div>
                       <div>
-                        <div style={{ fontWeight: member.anonymous ? 400 : 500, color: member.anonymous ? "var(--ink-3)" : "var(--ink)" }}>
-                          {member.anonymous ? <i>访客 · 未绑定</i> : member.name}
+                        <div
+                          style={{
+                            fontWeight: member.anonymous ? 400 : 500,
+                            color: member.anonymous
+                              ? "var(--ink-3)"
+                              : "var(--ink)",
+                          }}
+                        >
+                          {member.anonymous ? (
+                            <i>访客 · 未绑定</i>
+                          ) : (
+                            member.name
+                          )}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: "11px 14px", color: member.phone === "—" ? "var(--ink-4)" : "var(--ink-2)", fontFamily: "var(--mono)", fontSize: 11.5 }}>
+                  <td
+                    style={{
+                      padding: "11px 14px",
+                      color:
+                        member.phone === "—" ? "var(--ink-4)" : "var(--ink-2)",
+                      fontFamily: "var(--mono)",
+                      fontSize: 11.5,
+                    }}
+                  >
                     {member.phone}
                   </td>
-                  <td style={{ padding: "11px 14px", color: "var(--ink-2)" }}>{member.source}</td>
-                  <td style={{ padding: "11px 14px", color: "var(--ink-2)", fontVariantNumeric: "tabular-nums" }}>{member.joinedAt}</td>
-                  <td style={{ padding: "11px 14px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{member.courseCount}</td>
-                  <td style={{ padding: "11px 14px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{member.playbackMinutes}</td>
-                  <td style={{ padding: "11px 14px", color: "var(--ink-2)" }}>{member.lastActive}</td>
+                  <td style={{ padding: "11px 14px", color: "var(--ink-2)" }}>
+                    {member.source}
+                  </td>
+                  <td
+                    style={{
+                      padding: "11px 14px",
+                      color: "var(--ink-2)",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {member.joinedAt}
+                  </td>
+                  <td
+                    style={{
+                      padding: "11px 14px",
+                      textAlign: "right",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {member.courseCount}
+                  </td>
+                  <td
+                    style={{
+                      padding: "11px 14px",
+                      textAlign: "right",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {member.playbackMinutes}
+                  </td>
+                  <td style={{ padding: "11px 14px", color: "var(--ink-2)" }}>
+                    {member.lastActive}
+                  </td>
                   <td style={{ padding: "11px 14px" }}>
                     {member.bound ? (
-                      <span className="tz-chip is-accent" style={{ fontSize: 10 }}>已绑定</span>
+                      <span
+                        className="tz-chip is-accent"
+                        style={{ fontSize: 10 }}
+                      >
+                        已绑定
+                      </span>
                     ) : (
-                      <span className="tz-chip" style={{ fontSize: 10 }}>访客</span>
+                      <span className="tz-chip" style={{ fontSize: 10 }}>
+                        访客
+                      </span>
                     )}
                   </td>
                 </tr>

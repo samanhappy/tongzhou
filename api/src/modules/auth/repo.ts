@@ -37,6 +37,13 @@ export async function create(input: {
       `INSERT INTO users (id, tenant_id, email, password_hash, role, created_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
     )
-    .run([id, input.tenantId, input.email.toLowerCase(), input.passwordHash, input.role ?? "owner", Date.now()]);
+    .run([
+      id,
+      input.tenantId,
+      input.email.toLowerCase(),
+      input.passwordHash,
+      input.role ?? "owner",
+      Date.now(),
+    ]);
   return (await getById(id))!;
 }

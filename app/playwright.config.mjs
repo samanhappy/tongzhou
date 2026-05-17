@@ -15,7 +15,9 @@ export default defineConfig({
   },
   outputDir: "./test-results",
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : [["list"]],
+  reporter: process.env.CI
+    ? [["github"], ["html", { open: "never" }]]
+    : [["list"]],
   use: {
     baseURL: "http://127.0.0.1:4273",
     trace: "on-first-retry",

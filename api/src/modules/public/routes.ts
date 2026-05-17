@@ -48,7 +48,8 @@ export async function registerPublicRoutes(app: FastifyInstance) {
   }>("/api/x/:slug/progress", async (req, reply) => {
     const t = await getBySlug(req.params.slug);
     if (!t) return reply.code(404).send({ error: "tenant not found" });
-    const { lessonId, watchedSec, completed, anonToken, memberId } = req.body ?? ({} as never);
+    const { lessonId, watchedSec, completed, anonToken, memberId } =
+      req.body ?? ({} as never);
     if (!lessonId) return reply.code(400).send({ error: "lessonId required" });
     if (!anonToken && !memberId) {
       return reply.code(400).send({ error: "anonToken or memberId required" });

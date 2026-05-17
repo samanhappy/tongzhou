@@ -44,5 +44,5 @@ export function createLocalVideo(): Video {
 }
 
 function safeName(name: string) {
-  return name.replace(/[^\w.\-]/g, "_").slice(-120);
+  return name.replace(/[^\w.-]/g, "_").slice(-120);
 }

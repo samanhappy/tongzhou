@@ -1,5 +1,22 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
+
+const sans = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
+
+const serif = Noto_Serif_SC({
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+  variable: "--font-serif",
+});
 
 export const metadata: Metadata = {
   title: "同舟 · 轻量化课程交付 SaaS",
@@ -12,15 +29,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html
+      lang="zh-CN"
+      className={`${sans.variable} ${mono.variable} ${serif.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

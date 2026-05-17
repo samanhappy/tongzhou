@@ -21,7 +21,14 @@ export default async function StudentLanding({
   const data = await getStudentLanding(slug);
   if (!data) notFound();
 
-  const { tenant, track, lessons, continueLessonId, source, noStudentSessionYet } = data;
+  const {
+    tenant,
+    track,
+    lessons,
+    continueLessonId,
+    source,
+    noStudentSessionYet,
+  } = data;
   const continueLesson = continueLessonId
     ? lessons.find((l) => l.id === continueLessonId)
     : null;
@@ -32,7 +39,13 @@ export default async function StudentLanding({
       <H5Brand />
 
       <div style={{ padding: "0 18px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 8,
+          }}
+        >
           <SourceChip source={source} />
         </div>
 
@@ -86,7 +99,9 @@ export default async function StudentLanding({
             >
               {track.title}
               <br />
-              <span style={{ fontSize: 16, opacity: 0.78 }}>· {track.subtitle} ·</span>
+              <span style={{ fontSize: 16, opacity: 0.78 }}>
+                · {track.subtitle} ·
+              </span>
             </h1>
             <p
               style={{
@@ -99,12 +114,20 @@ export default async function StudentLanding({
             >
               {track.oneLine}
             </p>
-            <div style={{ display: "flex", gap: 16, fontSize: 11, opacity: 0.8 }}>
+            <div
+              style={{ display: "flex", gap: 16, fontSize: 11, opacity: 0.8 }}
+            >
               <span>
-                <b style={{ fontVariantNumeric: "tabular-nums" }}>{lessons.length}</b> 节
+                <b style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {lessons.length}
+                </b>{" "}
+                节
               </span>
               <span>
-                <b style={{ fontVariantNumeric: "tabular-nums" }}>{track.totalMinutes}</b> 分钟
+                <b style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {track.totalMinutes}
+                </b>{" "}
+                分钟
               </span>
               <span>
                 <b style={{ fontVariantNumeric: "tabular-nums" }}>
@@ -146,10 +169,18 @@ export default async function StudentLanding({
             }}
           >
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginBottom: 3 }}>
+              <div
+                style={{
+                  fontSize: 11.5,
+                  color: "var(--ink-3)",
+                  marginBottom: 3,
+                }}
+              >
                 继续从上次的地方
               </div>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{continueLesson.t}</div>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>
+                {continueLesson.t}
+              </div>
               <div style={{ marginTop: 8 }}>
                 <Bar value={continueLesson.progress ?? 0} />
               </div>
@@ -184,11 +215,15 @@ export default async function StudentLanding({
                 marginBottom: 12,
               }}
             >
-              <h3 className="tz-serif" style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>
+              <h3
+                className="tz-serif"
+                style={{ margin: 0, fontSize: 16, fontWeight: 500 }}
+              >
                 课时
               </h3>
               <span style={{ fontSize: 11, color: "var(--ink-3)" }}>
-                共 {lessons.length} 节{doneCount > 0 ? ` · 已完成 ${doneCount}` : ""}
+                共 {lessons.length} 节
+                {doneCount > 0 ? ` · 已完成 ${doneCount}` : ""}
               </span>
             </div>
 
@@ -252,7 +287,9 @@ export default async function StudentLanding({
                           fontSize: 13,
                           fontWeight: l.status === "playing" ? 500 : 400,
                           color:
-                            l.status === "playing" ? "var(--accent-deep)" : "var(--ink)",
+                            l.status === "playing"
+                              ? "var(--accent-deep)"
+                              : "var(--ink)",
                         }}
                       >
                         {l.t}
@@ -339,7 +376,8 @@ export default async function StudentLanding({
               lineHeight: 1.7,
             }}
           >
-            由 <b style={{ color: "var(--ink-2)" }}>同舟</b> 提供轻量化课程交付 · v0.3
+            由 <b style={{ color: "var(--ink-2)" }}>同舟</b> 提供轻量化课程交付
+            · v0.3
           </div>
           <div style={{ textAlign: "center", marginTop: 6 }}>
             <Link

@@ -64,12 +64,20 @@ export default async function StudentPlayer({
           >
             {lesson.t}
           </div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
+          <div
+            style={{
+              fontSize: 10,
+              color: "rgba(255,255,255,0.55)",
+              marginTop: 2,
+            }}
+          >
             {tenant.name} · 七天成长计划
           </div>
         </div>
         <SourceChip source={source} />
-        <button style={{ background: "transparent", border: 0, color: "#f0eee9" }}>
+        <button
+          style={{ background: "transparent", border: 0, color: "#f0eee9" }}
+        >
           <I.share size={16} />
         </button>
       </div>
@@ -83,7 +91,13 @@ export default async function StudentPlayer({
           background: "#000",
         }}
       >
-        <Placeholder w="100%" h="100%" radius={0} dark label="封面 · 春日小院" />
+        <Placeholder
+          w="100%"
+          h="100%"
+          radius={0}
+          dark
+          label="封面 · 春日小院"
+        />
 
         {/* 水印 ——— V0 红线 */}
         <WatermarkLayer text={`${watermarkPhone} · ${tenant.name}`} />
@@ -259,7 +273,10 @@ export default async function StudentPlayer({
           )}
         </div>
 
-        <h2 className="tz-serif" style={{ margin: "0 0 6px", fontSize: 19, fontWeight: 500 }}>
+        <h2
+          className="tz-serif"
+          style={{ margin: "0 0 6px", fontSize: 19, fontWeight: 500 }}
+        >
           {lesson.t}
         </h2>
         <p
@@ -321,7 +338,11 @@ function PrevNextButton({
   slug: string;
 }) {
   const isNext = type === "next";
-  const disabled = !item || item.status === "locked" || item.status === "draft" || item.status === "failed";
+  const disabled =
+    !item ||
+    item.status === "locked" ||
+    item.status === "draft" ||
+    item.status === "failed";
   const baseStyle: React.CSSProperties = {
     padding: 12,
     border: isNext ? "0" : "1px solid var(--paper-edge)",
@@ -341,7 +362,13 @@ function PrevNextButton({
     <>
       {!isNext && <I.chevL size={14} style={{ color: "var(--ink-3)" }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 10, color: "var(--ink-3)", opacity: isNext ? 0.6 : 1 }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: "var(--ink-3)",
+            opacity: isNext ? 0.6 : 1,
+          }}
+        >
           {isNext ? "下一课时" : "上一课时"}
         </div>
         <div

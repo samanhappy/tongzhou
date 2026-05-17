@@ -49,8 +49,10 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const slug = raw.slug?.trim().toLowerCase();
     const name = raw.name?.trim();
 
-    if (!email || !EMAIL_RE.test(email)) throw new HttpError(400, "invalid email");
-    if (!password || password.length < 8) throw new HttpError(400, "password >= 8 chars");
+    if (!email || !EMAIL_RE.test(email))
+      throw new HttpError(400, "invalid email");
+    if (!password || password.length < 8)
+      throw new HttpError(400, "password >= 8 chars");
     if (!slug || !SLUG_RE.test(slug)) {
       throw new HttpError(400, "slug must be 3-32 chars, [a-z0-9-]");
     }
@@ -78,7 +80,11 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       return { user: u, tenant: t };
     });
 
-    const token = await signJwt({ sub: user.id, tid: tenant.id, email: user.email });
+    const token = await signJwt({
+      sub: user.id,
+      tid: tenant.id,
+      email: user.email,
+    });
     setSessionCookie(reply, token);
 
     return {
@@ -94,7 +100,8 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       const raw = req.body ?? ({} as never);
       const email = raw.email?.trim().toLowerCase();
       const password = raw.password;
-      if (!email || !password) throw new HttpError(400, "email & password required");
+      if (!email || !password)
+        throw new HttpError(400, "email & password required");
 
       const user = await authRepo.getByEmail(email);
       if (!user || !user.password_hash) {
@@ -107,7 +114,11 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       const tenant = await tenantsRepo.getById(user.tenant_id);
       if (!tenant) throw new HttpError(500, "user has no tenant");
 
-      const token = await signJwt({ sub: user.id, tid: tenant.id, email: user.email });
+      const token = await signJwt({
+        sub: user.id,
+        tid: tenant.id,
+        email: user.email,
+      });
       setSessionCookie(reply, token);
 
       return {
@@ -126,7 +137,8 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   // ─── me ───
   // 中间件已完成 cookie JWT / dev fallback 解析
   app.get("/api/auth/me", async (req, reply) => {
-    if (!req.auth || !req.tenant) return reply.code(401).send({ error: "no session" });
+    if (!req.auth || !req.tenant)
+      return reply.code(401).send({ error: "no session" });
     const tenant = await tenantsRepo.getById(req.tenant.id);
     if (!tenant) return reply.code(500).send({ error: "tenant missing" });
     return {

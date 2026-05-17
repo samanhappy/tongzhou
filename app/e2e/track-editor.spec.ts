@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("creator can drag to reorder lessons and keep the saved order", async ({ page }) => {
+test("creator can drag to reorder lessons and keep the saved order", async ({
+  page,
+}) => {
   const token = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   await page.goto("/register");
@@ -35,18 +37,32 @@ test("creator can drag to reorder lessons and keep the saved order", async ({ pa
 
   const lessonCards = page.getByTestId("lesson-card");
   await expect(lessonCards).toHaveCount(2);
-  await expect(lessonCards.nth(0).getByTestId("lesson-card-title")).toHaveText("第一课");
-  await expect(lessonCards.nth(1).getByTestId("lesson-card-title")).toHaveText("第二课");
+  await expect(lessonCards.nth(0).getByTestId("lesson-card-title")).toHaveText(
+    "第一课",
+  );
+  await expect(lessonCards.nth(1).getByTestId("lesson-card-title")).toHaveText(
+    "第二课",
+  );
 
   await lessonCards.nth(1).dragTo(lessonCards.nth(0));
-  await expect(page.getByText("课时顺序已保存。", { exact: true })).toBeVisible();
-  await expect(lessonCards.nth(0).getByTestId("lesson-card-title")).toHaveText("第二课");
-  await expect(lessonCards.nth(1).getByTestId("lesson-card-title")).toHaveText("第一课");
+  await expect(
+    page.getByText("课时顺序已保存。", { exact: true }),
+  ).toBeVisible();
+  await expect(lessonCards.nth(0).getByTestId("lesson-card-title")).toHaveText(
+    "第二课",
+  );
+  await expect(lessonCards.nth(1).getByTestId("lesson-card-title")).toHaveText(
+    "第一课",
+  );
 
   await page.reload();
 
   const reloadedCards = page.getByTestId("lesson-card");
   await expect(reloadedCards).toHaveCount(2);
-  await expect(reloadedCards.nth(0).getByTestId("lesson-card-title")).toHaveText("第二课");
-  await expect(reloadedCards.nth(1).getByTestId("lesson-card-title")).toHaveText("第一课");
+  await expect(
+    reloadedCards.nth(0).getByTestId("lesson-card-title"),
+  ).toHaveText("第二课");
+  await expect(
+    reloadedCards.nth(1).getByTestId("lesson-card-title"),
+  ).toHaveText("第一课");
 });

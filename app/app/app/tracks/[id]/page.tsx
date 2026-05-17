@@ -18,12 +18,26 @@ export default async function TrackEditPage({
   if (!track) notFound();
 
   return (
-    <CreatorShell title={`${track.title} · ${track.subtitle}`} breadcrumb={["醒春阁", "课程", `${track.title} · ${track.subtitle}`]}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 8 }}>
+    <CreatorShell
+      title={`${track.title} · ${track.subtitle}`}
+      breadcrumb={["醒春阁", "课程", `${track.title} · ${track.subtitle}`]}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          marginTop: -10,
+          marginBottom: 8,
+        }}
+      >
         <SourceChip source={track.source} />
       </div>
 
-      <TrackEditorClient initialTrack={track} initialUploads={[...library.uploads]} />
+      <TrackEditorClient
+        initialTrack={track}
+        initialUploads={[...library.uploads]}
+      />
     </CreatorShell>
   );
 }

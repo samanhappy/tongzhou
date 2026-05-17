@@ -48,7 +48,11 @@ type COSClient = {
     },
     cb?: (err: unknown, data: { Url: string }) => void,
   ) => string | void;
-  deleteObject: (params: { Bucket: string; Region: string; Key: string }) => Promise<unknown>;
+  deleteObject: (params: {
+    Bucket: string;
+    Region: string;
+    Key: string;
+  }) => Promise<unknown>;
 };
 
 export function createTencentCosStorage(cos: CosConfig): Storage {

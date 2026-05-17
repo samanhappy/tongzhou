@@ -85,15 +85,24 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
     oneLine: "七个清晨，从见我到见今。",
     slug: "qitian-chengzhang",
   });
-  const [createdTrack, setCreatedTrack] = useState<{ id: string; slug: string } | null>(null);
+  const [createdTrack, setCreatedTrack] = useState<{
+    id: string;
+    slug: string;
+  } | null>(null);
 
   async function handleNext() {
     setError(null);
     if (step === 1) {
-      setTenantDraft({ name: form.name || tenant.name, slug: form.slug || tenant.slug });
+      setTenantDraft({
+        name: form.name || tenant.name,
+        slug: form.slug || tenant.slug,
+      });
 
       if (!apiBase) {
-        setBrandForm((current) => ({ ...current, slug: form.slug || tenant.slug }));
+        setBrandForm((current) => ({
+          ...current,
+          slug: form.slug || tenant.slug,
+        }));
         setStep(2);
         return;
       }
@@ -131,7 +140,9 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
         setTenantDraft((current) => ({ ...current, slug: nextSlug }));
         setStep(3);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "保存品牌失败，请稍后再试");
+        setError(
+          err instanceof Error ? err.message : "保存品牌失败，请稍后再试",
+        );
       } finally {
         setBusy(false);
       }
@@ -146,7 +157,8 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
     if (step === 4) {
       setBusy(true);
       try {
-        const nextSlug = suggestSlug(trackForm.slug || trackForm.title) || "first-course";
+        const nextSlug =
+          suggestSlug(trackForm.slug || trackForm.title) || "first-course";
         if (!apiBase) {
           setCreatedTrack({ id: "mock-first-track", slug: nextSlug });
           setStep(5);
@@ -168,7 +180,9 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
             });
 
         if (!createdTrack) {
-          for (const upload of uploads.filter((item) => item.phase === "ready")) {
+          for (const upload of uploads.filter(
+            (item) => item.phase === "ready",
+          )) {
             await createLesson(apiBase, currentTrack.track.id, {
               title: fileNameToTitle(upload.name),
               summary: `上传自 ${upload.name}`,
@@ -187,7 +201,9 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
         setCreatedTrack({ id: currentTrack.track.id, slug: nextSlug });
         setStep(5);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "创建课程失败，请稍后再试");
+        setError(
+          err instanceof Error ? err.message : "创建课程失败，请稍后再试",
+        );
       } finally {
         setBusy(false);
       }
@@ -270,15 +286,49 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
               color: "var(--ink-3)",
             }}
           >
-            注册 → 品牌 → 上传 → 发布 → 拿到分享链接 · 全过程 ≤ 30 分钟（含转码）
+            注册 → 品牌 → 上传 → 发布 → 拿到分享链接 · 全过程 ≤ 30
+            分钟（含转码）
           </p>
         </div>
 
-        <StepCard step={step} total={STEPS.length} title={STEPS[step - 1].title} time={STEPS[step - 1].time}>
-          {step === 1 && <Step1 apiBase={apiBase} busy={busy} error={error} form={form} setForm={setForm} />}
-          {step === 2 && <Step2 tenantName={tenantDraft.name} form={brandForm} setForm={setBrandForm} />}
-          {step === 3 && <Step3 apiBase={apiBase} uploads={uploads} onFilesSelected={handleFiles} busy={busy} />}
-          {step === 4 && <Step4 form={trackForm} setForm={setTrackForm} uploads={uploads} busy={busy} />}
+        <StepCard
+          step={step}
+          total={STEPS.length}
+          title={STEPS[step - 1].title}
+          time={STEPS[step - 1].time}
+        >
+          {step === 1 && (
+            <Step1
+              apiBase={apiBase}
+              busy={busy}
+              error={error}
+              form={form}
+              setForm={setForm}
+            />
+          )}
+          {step === 2 && (
+            <Step2
+              tenantName={tenantDraft.name}
+              form={brandForm}
+              setForm={setBrandForm}
+            />
+          )}
+          {step === 3 && (
+            <Step3
+              apiBase={apiBase}
+              uploads={uploads}
+              onFilesSelected={handleFiles}
+              busy={busy}
+            />
+          )}
+          {step === 4 && (
+            <Step4
+              form={trackForm}
+              setForm={setTrackForm}
+              uploads={uploads}
+              busy={busy}
+            />
+          )}
           {step === 5 && <Step5 tenantSlug={tenantDraft.slug} />}
 
           {step < 5 ? (
@@ -391,7 +441,10 @@ function StepCard({
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <TZMark size={20} />
-            <span className="tz-serif" style={{ fontSize: 13, fontWeight: 500 }}>
+            <span
+              className="tz-serif"
+              style={{ fontSize: 13, fontWeight: 500 }}
+            >
               同舟
             </span>
           </div>
@@ -487,7 +540,8 @@ function Step1({
             marginBottom: 12,
           }}
         >
-          当前未配置 <span className="tz-mono">API_BASE</span>，点击后会继续离线演示，不会真的创建账号。
+          当前未配置 <span className="tz-mono">API_BASE</span>
+          ，点击后会继续离线演示，不会真的创建账号。
         </div>
       )}
 
@@ -495,7 +549,9 @@ function Step1({
         <input
           className="tz-input"
           value={form.email}
-          onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, email: event.target.value }))
+          }
           style={{ fontSize: 12 }}
         />
       </FieldRow>
@@ -504,7 +560,9 @@ function Step1({
           className="tz-input"
           type="password"
           value={form.password}
-          onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, password: event.target.value }))
+          }
           style={{ fontSize: 12 }}
         />
       </FieldRow>
@@ -512,7 +570,9 @@ function Step1({
         <input
           className="tz-input"
           value={form.name}
-          onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, name: event.target.value }))
+          }
           style={{ fontSize: 12 }}
         />
       </FieldRow>
@@ -522,10 +582,13 @@ function Step1({
             className="tz-input"
             value={form.slug}
             onChange={(event) =>
-              setForm((current) => ({ ...current, slug: event.target.value.toLowerCase() }))
+              setForm((current) => ({
+                ...current,
+                slug: event.target.value.toLowerCase(),
+              }))
             }
-          style={{ fontSize: 12 }}
-        />
+            style={{ fontSize: 12 }}
+          />
           <div
             style={{
               background: "var(--paper-deep)",
@@ -627,14 +690,20 @@ function Step2({
             <button
               key={color}
               type="button"
-              onClick={() => setForm((current) => ({ ...current, themeHue: hue }))}
+              onClick={() =>
+                setForm((current) => ({ ...current, themeHue: hue }))
+              }
               style={{
                 width: 28,
                 height: 28,
                 borderRadius: 999,
                 background: color,
-                border: form.themeHue === hue ? "2px solid var(--ink)" : "2px solid transparent",
-                boxShadow: form.themeHue === hue ? "inset 0 0 0 2px #fff" : "none",
+                border:
+                  form.themeHue === hue
+                    ? "2px solid var(--ink)"
+                    : "2px solid transparent",
+                boxShadow:
+                  form.themeHue === hue ? "inset 0 0 0 2px #fff" : "none",
                 cursor: "pointer",
               }}
             />
@@ -675,7 +744,9 @@ function Step2({
             .tongzhou.app
           </div>
         </div>
-        <div style={{ fontSize: 10, color: "var(--accent)", marginTop: 4 }}>✓ 可用</div>
+        <div style={{ fontSize: 10, color: "var(--accent)", marginTop: 4 }}>
+          ✓ 可用
+        </div>
       </FieldRow>
 
       <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 10 }}>
@@ -736,19 +807,76 @@ function Step3({
               marginBottom: 10,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <I.video size={14} style={{ color: upload.phase === "ready" ? "var(--accent)" : "var(--ink-3)" }} />
-              <span style={{ fontSize: 12, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <I.video
+                size={14}
+                style={{
+                  color:
+                    upload.phase === "ready" ? "var(--accent)" : "var(--ink-3)",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  flex: 1,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {upload.name}
               </span>
-              <span style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "var(--mono)" }}>{upload.sizeText}</span>
-            </div>
-            <Bar value={upload.phase === "ready" ? 100 : upload.phase === "uploading" ? 64 : upload.phase === "transcoding" ? 88 : 100} />
-            <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 10, color: upload.phase === "ready" ? "var(--accent)" : "var(--ink-2)" }}>
-              <span>
-                {upload.phase === "ready" ? "✓ 已上传" : upload.phase === "uploading" ? "上传中" : upload.phase === "transcoding" ? "转码中" : "上传失败"}
+              <span
+                style={{
+                  fontSize: 10,
+                  color: "var(--ink-3)",
+                  fontFamily: "var(--mono)",
+                }}
+              >
+                {upload.sizeText}
               </span>
-              <span style={{ fontFamily: "var(--mono)" }}>{apiBase ? "后端已记录" : "离线演示"}</span>
+            </div>
+            <Bar
+              value={
+                upload.phase === "ready"
+                  ? 100
+                  : upload.phase === "uploading"
+                    ? 64
+                    : upload.phase === "transcoding"
+                      ? 88
+                      : 100
+              }
+            />
+            <div
+              style={{
+                marginTop: 6,
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 10,
+                color:
+                  upload.phase === "ready" ? "var(--accent)" : "var(--ink-2)",
+              }}
+            >
+              <span>
+                {upload.phase === "ready"
+                  ? "✓ 已上传"
+                  : upload.phase === "uploading"
+                    ? "上传中"
+                    : upload.phase === "transcoding"
+                      ? "转码中"
+                      : "上传失败"}
+              </span>
+              <span style={{ fontFamily: "var(--mono)" }}>
+                {apiBase ? "后端已记录" : "离线演示"}
+              </span>
             </div>
           </div>
         ))
@@ -768,11 +896,35 @@ function Step3({
         <I.upload size={18} style={{ color: "var(--accent)" }} />
         <div style={{ marginTop: 6 }}>把视频文件拖到这里</div>
         <div style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
-          或 <button type="button" onClick={() => inputRef.current?.click()} style={{ color: "var(--accent)", background: "transparent", border: 0, padding: 0, cursor: "pointer" }}>从本地选择</button>
+          或{" "}
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            style={{
+              color: "var(--accent)",
+              background: "transparent",
+              border: 0,
+              padding: 0,
+              cursor: "pointer",
+            }}
+          >
+            从本地选择
+          </button>
         </div>
-        <input ref={inputRef} type="file" accept="video/*" multiple hidden onChange={(event) => void onFilesSelected(event.target.files)} />
+        <input
+          ref={inputRef}
+          type="file"
+          accept="video/*"
+          multiple
+          hidden
+          onChange={(event) => void onFilesSelected(event.target.files)}
+        />
       </div>
-      {busy && <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 10 }}>正在上传并登记视频，请稍候…</div>}
+      {busy && (
+        <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 10 }}>
+          正在上传并登记视频，请稍候…
+        </div>
+      )}
     </>
   );
 }
@@ -808,7 +960,9 @@ function Step4({
         <input
           className="tz-input"
           value={form.oneLine}
-          onChange={(event) => setForm((current) => ({ ...current, oneLine: event.target.value }))}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, oneLine: event.target.value }))
+          }
           style={{ fontSize: 12 }}
         />
       </FieldRow>
@@ -817,16 +971,36 @@ function Step4({
           className="tz-input"
           value={form.slug}
           onChange={(event) =>
-            setForm((current) => ({ ...current, slug: suggestSlug(event.target.value) }))
+            setForm((current) => ({
+              ...current,
+              slug: suggestSlug(event.target.value),
+            }))
           }
           style={{ fontSize: 12 }}
         />
       </FieldRow>
 
-      <div style={{ marginTop: 14, marginBottom: 8, fontSize: 11, fontWeight: 500 }}>
+      <div
+        style={{
+          marginTop: 14,
+          marginBottom: 8,
+          fontSize: 11,
+          fontWeight: 500,
+        }}
+      >
         课时（{uploads.length}）
       </div>
-      {(uploads.length ? uploads : [{ id: "placeholder", name: "还没有上传视频", sizeText: "—", phase: "failed" as const }]).map((upload, i) => (
+      {(uploads.length
+        ? uploads
+        : [
+            {
+              id: "placeholder",
+              name: "还没有上传视频",
+              sizeText: "—",
+              phase: "failed" as const,
+            },
+          ]
+      ).map((upload, i) => (
         <div
           key={upload.id}
           style={{
@@ -855,11 +1029,18 @@ function Step4({
           <span
             style={{
               fontSize: 10,
-              color: upload.phase === "ready" ? "var(--accent)" : "var(--ink-3)",
+              color:
+                upload.phase === "ready" ? "var(--accent)" : "var(--ink-3)",
               fontFamily: "var(--mono)",
             }}
           >
-            {upload.phase === "ready" ? "已就绪" : upload.phase === "uploading" ? "上传中…" : upload.phase === "transcoding" ? "转码中…" : "待上传"}
+            {upload.phase === "ready"
+              ? "已就绪"
+              : upload.phase === "uploading"
+                ? "上传中…"
+                : upload.phase === "transcoding"
+                  ? "转码中…"
+                  : "待上传"}
           </span>
         </div>
       ))}
@@ -892,7 +1073,11 @@ function Step4({
         }}
       >
         <I.info size={12} style={{ marginTop: 1, flex: "0 0 auto" }} />
-        <span>{busy ? "正在创建课程并发布，请稍候…" : "点击下方按钮后，将创建课程、挂上已上传视频，并立即发布。"}</span>
+        <span>
+          {busy
+            ? "正在创建课程并发布，请稍候…"
+            : "点击下方按钮后，将创建课程、挂上已上传视频，并立即发布。"}
+        </span>
       </div>
     </>
   );
@@ -905,8 +1090,10 @@ function Step5({ tenantSlug }: { tenantSlug: string }) {
       <div
         style={{
           padding: "18px 14px",
-          background: "linear-gradient(180deg, var(--accent-soft), var(--paper))",
-          border: "1px solid color-mix(in oklch, var(--accent) 18%, transparent)",
+          background:
+            "linear-gradient(180deg, var(--accent-soft), var(--paper))",
+          border:
+            "1px solid color-mix(in oklch, var(--accent) 18%, transparent)",
           borderRadius: 10,
           textAlign: "center",
           marginBottom: 16,
@@ -1003,11 +1190,25 @@ function Step5({ tenantSlug }: { tenantSlug: string }) {
         </div>
       </div>
 
-      <div style={{ fontSize: 11.5, fontWeight: 500, marginBottom: 8 }}>下一步建议</div>
+      <div style={{ fontSize: 11.5, fontWeight: 500, marginBottom: 8 }}>
+        下一步建议
+      </div>
       {[
-        { i: <I.csv size={12} />, t: "导入第一批学员名单（CSV）", to: "/app/members" },
-        { i: <I.share size={12} />, t: "把链接发到你已有的微信群", to: `/x/${tenantSlug}` },
-        { i: <I.usage size={12} />, t: "在用量面板了解 Freemium 配额", to: "/app/usage" },
+        {
+          i: <I.csv size={12} />,
+          t: "导入第一批学员名单（CSV）",
+          to: "/app/members",
+        },
+        {
+          i: <I.share size={12} />,
+          t: "把链接发到你已有的微信群",
+          to: `/x/${tenantSlug}`,
+        },
+        {
+          i: <I.usage size={12} />,
+          t: "在用量面板了解 Freemium 配额",
+          to: "/app/usage",
+        },
       ].map((s, i) => (
         <Link
           key={i}

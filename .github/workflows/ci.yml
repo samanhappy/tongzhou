@@ -27,9 +27,25 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Lint API
+        working-directory: api
+        run: npm run lint
+
+      - name: Check API formatting
+        working-directory: api
+        run: npm run format:check
+
       - name: Typecheck API
         working-directory: api
         run: npm run typecheck
+
+      - name: Lint App
+        working-directory: app
+        run: npm run lint
+
+      - name: Check App formatting
+        working-directory: app
+        run: npm run format:check
 
       - name: Typecheck App
         working-directory: app

@@ -9,7 +9,8 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
   const [isWide, setIsWide] = useState(false);
 
   useEffect(() => {
-    const update = () => setIsWide(window.matchMedia("(min-width: 720px)").matches);
+    const update = () =>
+      setIsWide(window.matchMedia("(min-width: 720px)").matches);
     update();
     const mq = window.matchMedia("(min-width: 720px)");
     mq.addEventListener("change", update);
@@ -85,10 +86,38 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
             />
             <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
               <svg width="17" height="11" viewBox="0 0 17 11">
-                <rect x="0" y="7" width="3" height="4" rx="0.5" fill="currentColor" />
-                <rect x="4.5" y="5" width="3" height="6" rx="0.5" fill="currentColor" />
-                <rect x="9" y="2.5" width="3" height="8.5" rx="0.5" fill="currentColor" />
-                <rect x="13.5" y="0" width="3" height="11" rx="0.5" fill="currentColor" />
+                <rect
+                  x="0"
+                  y="7"
+                  width="3"
+                  height="4"
+                  rx="0.5"
+                  fill="currentColor"
+                />
+                <rect
+                  x="4.5"
+                  y="5"
+                  width="3"
+                  height="6"
+                  rx="0.5"
+                  fill="currentColor"
+                />
+                <rect
+                  x="9"
+                  y="2.5"
+                  width="3"
+                  height="8.5"
+                  rx="0.5"
+                  fill="currentColor"
+                />
+                <rect
+                  x="13.5"
+                  y="0"
+                  width="3"
+                  height="11"
+                  rx="0.5"
+                  fill="currentColor"
+                />
               </svg>
               <svg width="25" height="11" viewBox="0 0 25 11">
                 <rect
@@ -100,7 +129,14 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
                   stroke="currentColor"
                   fill="none"
                 />
-                <rect x="2" y="2" width="18" height="7" rx="1.5" fill="currentColor" />
+                <rect
+                  x="2"
+                  y="2"
+                  width="18"
+                  height="7"
+                  rx="1.5"
+                  fill="currentColor"
+                />
               </svg>
             </div>
           </div>

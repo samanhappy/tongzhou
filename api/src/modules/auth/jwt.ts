@@ -21,12 +21,17 @@ function getSecret(): Uint8Array {
     throw new Error("[auth/jwt] AUTH_JWT_SECRET not set");
   }
   if (s.length < 32) {
-    throw new Error(`[auth/jwt] AUTH_JWT_SECRET too short (${s.length} chars, need >= 32)`);
+    throw new Error(
+      `[auth/jwt] AUTH_JWT_SECRET too short (${s.length} chars, need >= 32)`,
+    );
   }
   return new TextEncoder().encode(s);
 }
 
-export async function signJwt(payload: JwtPayload, ttlSec = 7 * 24 * 3600): Promise<string> {
+export async function signJwt(
+  payload: JwtPayload,
+  ttlSec = 7 * 24 * 3600,
+): Promise<string> {
   return new SignJWT({ tid: payload.tid, email: payload.email })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
@@ -43,7 +48,11 @@ export async function verifyJwt(token: string): Promise<JwtPayload | null> {
       issuer: ISSUER,
       audience: AUDIENCE,
     });
-    if (!payload.sub || typeof payload.tid !== "string" || typeof payload.email !== "string") {
+    if (
+      !payload.sub ||
+      typeof payload.tid !== "string" ||
+      typeof payload.email !== "string"
+    ) {
       return null;
     }
     return { sub: payload.sub, tid: payload.tid, email: payload.email };

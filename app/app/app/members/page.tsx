@@ -13,7 +13,15 @@ export default async function MembersPage() {
 
   return (
     <CreatorShell title="学员" breadcrumb={["醒春阁", "运营"]}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 14 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          marginTop: -10,
+          marginBottom: 14,
+        }}
+      >
         <SourceChip source={source} />
       </div>
 

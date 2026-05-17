@@ -2,7 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "tongzhou-api-vitest-sqlite-"));
+const root = fs.mkdtempSync(
+  path.join(os.tmpdir(), "tongzhou-api-vitest-sqlite-"),
+);
 
 process.env.NODE_ENV = "test";
 process.env.LOG_LEVEL = "silent";
@@ -16,7 +18,8 @@ process.env.DB_SQLITE_PATH = path.join(root, "data", "test.db");
 process.env.CACHE_DRIVER = "memory";
 process.env.STORAGE_DRIVER = "local";
 process.env.STORAGE_LOCAL_DIR = path.join(root, "uploads");
-process.env.STORAGE_PUBLIC_BASE = process.env.STORAGE_PUBLIC_BASE ?? "http://127.0.0.1:4100/files";
+process.env.STORAGE_PUBLIC_BASE =
+  process.env.STORAGE_PUBLIC_BASE ?? "http://127.0.0.1:4100/files";
 process.env.VIDEO_DRIVER = "local";
 
 process.on("exit", () => {

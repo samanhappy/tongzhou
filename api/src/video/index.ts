@@ -35,17 +35,29 @@ export interface Video {
   driver: string;
 
   /** 服务端中转上传(MVP / 小文件) */
-  upload(args: { filename: string; body: Buffer; mime: string }): Promise<VideoUploadResult>;
+  upload(args: {
+    filename: string;
+    body: Buffer;
+    mime: string;
+  }): Promise<VideoUploadResult>;
 
   /** 颁发直传凭证(V0.5 起前端用) */
   sign?(args: {
     filename: string;
     mime: string;
     expiresSec?: number;
-  }): Promise<{ uploadUrl: string; method: string; key: string; expiresAt: number }>;
+  }): Promise<{
+    uploadUrl: string;
+    method: string;
+    key: string;
+    expiresAt: number;
+  }>;
 
   /** 取播放信息(带 playAuth 时效签名) */
-  getPlayInfo(videoId: string, opts?: { expiresSec?: number }): Promise<VideoPlayInfo>;
+  getPlayInfo(
+    videoId: string,
+    opts?: { expiresSec?: number },
+  ): Promise<VideoPlayInfo>;
 
   /** 删除媒资 */
   delete(videoId: string): Promise<void>;

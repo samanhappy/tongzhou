@@ -92,8 +92,7 @@ export default function Home() {
           >
             lib/mock.ts
           </code>{" "}
-          —{" "}
-          页面已按 design 设计稿和 roadmap V0 范围实现,三个入口请按下方选择。
+          — 页面已按 design 设计稿和 roadmap V0 范围实现,三个入口请按下方选择。
         </p>
 
         <Heading>入口</Heading>
@@ -118,10 +117,9 @@ export default function Home() {
                   width: 44,
                   height: 44,
                   borderRadius: 8,
-                  background:
-                    p.href.startsWith("/x/")
-                      ? "color-mix(in oklch, var(--seal) 12%, #fff)"
-                      : "var(--accent-soft)",
+                  background: p.href.startsWith("/x/")
+                    ? "color-mix(in oklch, var(--seal) 12%, #fff)"
+                    : "var(--accent-soft)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -180,10 +178,12 @@ export default function Home() {
             <b>学员看视频不被中断</b> — 即使创作者超额，已发布内容也将持续可播。
           </li>
           <li>
-            <b>不收钱</b> — 创作者用自己的渠道（小报童 / 知识星球）收钱，同舟只交付。
+            <b>不收钱</b> — 创作者用自己的渠道（小报童 /
+            知识星球）收钱，同舟只交付。
           </li>
           <li>
-            <b>4 维度按量计费</b> — 学员 / 课程 / 存储 / 播放分钟，Freemium 起步。
+            <b>4 维度按量计费</b> — 学员 / 课程 / 存储 / 播放分钟，Freemium
+            起步。
           </li>
         </ul>
 
@@ -195,8 +195,7 @@ export default function Home() {
             textAlign: "center",
           }}
         >
-          MVP · 数据全部 Mock · 见{" "}
-          <code className="tz-mono">roadmap/</code> 与{" "}
+          MVP · 数据全部 Mock · 见 <code className="tz-mono">roadmap/</code> 与{" "}
           <code className="tz-mono">design/</code>
         </div>
       </div>

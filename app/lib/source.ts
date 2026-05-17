@@ -114,7 +114,8 @@ function listFromMock(t: Track): ListTrack {
     cumulativeViewers: t.cumulativeViewers,
     completionRate: t.completionRate,
     lessonsTotal: t.lessons.length,
-    lessonsPublished: t.lessons.filter((l: Lesson) => l.status === "published").length,
+    lessonsPublished: t.lessons.filter((l: Lesson) => l.status === "published")
+      .length,
     source: "mock",
   };
 }
@@ -211,8 +212,9 @@ function synthTrend(end: number): number[] {
   // API 模式无历史数据 → 用一条线性 ramp 表示
   if (end <= 0) return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   const n = 12;
-  return Array.from({ length: n }, (_, i) =>
-    Math.round((end * (i + 1)) / n * 100) / 100,
+  return Array.from(
+    { length: n },
+    (_, i) => Math.round(((end * (i + 1)) / n) * 100) / 100,
   );
 }
 
@@ -227,7 +229,10 @@ function durationTextToSec(s: string): number {
 
 export async function getDashboardData(): Promise<DashboardData> {
   if (apiEnabled()) {
-    const [meters, tracksList] = await Promise.all([fetchMeters(), fetchTracks()]);
+    const [meters, tracksList] = await Promise.all([
+      fetchMeters(),
+      fetchTracks(),
+    ]);
     const byKey = Object.fromEntries(meters.map((m) => [m.key, m] as const));
     const trk = tracksList[0];
     const trackLessons = trk ? (await fetchTrack(trk.id)).lessons : [];
@@ -258,9 +263,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         value: fmt(Math.round(playback?.value ?? 0)),
         unit: playback?.unit,
         trend: synthTrend(playback?.value ?? 0),
-        foot: trackLessons.length
-          ? `${trackLessons.length} 节中累计`
-          : "—",
+        foot: trackLessons.length ? `${trackLessons.length} 节中累计` : "—",
       },
       {
         label: "视频存储",
@@ -324,10 +327,28 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   // mock fallback
   const quotas: QuotaRow[] = [
-    { label: "月活学员", value: 142, max: 200, unit: "人", color: "var(--accent)" },
-    { label: "发布课程", value: 6, max: 10, unit: "门", color: "var(--accent)" },
+    {
+      label: "月活学员",
+      value: 142,
+      max: 200,
+      unit: "人",
+      color: "var(--accent)",
+    },
+    {
+      label: "发布课程",
+      value: 6,
+      max: 10,
+      unit: "门",
+      color: "var(--accent)",
+    },
     { label: "视频存储", value: 3.8, max: 5, unit: "GB", color: "var(--warn)" },
-    { label: "播放分钟", value: 1284, max: 1500, unit: "分钟", color: "var(--warn)" },
+    {
+      label: "播放分钟",
+      value: 1284,
+      max: 1500,
+      unit: "分钟",
+      color: "var(--warn)",
+    },
   ];
   return {
     stats: mockDashboardStats,
@@ -375,7 +396,10 @@ export async function getUsageData(): Promise<UsageData> {
   if (apiEnabled()) {
     const ms = (await fetchMeters()).map(meterToRow);
     const totalPct = Math.round(
-      (ms.reduce((acc, m) => acc + Math.min(1, m.max ? m.value / m.max : 0), 0) /
+      (ms.reduce(
+        (acc, m) => acc + Math.min(1, m.max ? m.value / m.max : 0),
+        0,
+      ) /
         Math.max(1, ms.length)) *
         100,
     );
@@ -449,7 +473,8 @@ export type LibraryData = {
 };
 
 function formatBytes(size: number) {
-  if (size >= 1024 * 1024 * 1024) return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  if (size >= 1024 * 1024 * 1024)
+    return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   if (size >= 1024 * 1024) return `${Math.round(size / (1024 * 1024))} MB`;
   if (size >= 1024) return `${Math.round(size / 1024)} KB`;
   return `${size} B`;
@@ -511,7 +536,8 @@ export async function getMembersData(): Promise<MembersData> {
   if (apiEnabled()) {
     const { members, activeCount } = await fetchMembers();
     const meters = await fetchMeters();
-    const max = meters.find((x) => x.key === "members.active_count")?.max ?? 200;
+    const max =
+      meters.find((x) => x.key === "members.active_count")?.max ?? 200;
     return {
       members: members.map(memberFromApi),
       activeCount,
@@ -569,7 +595,9 @@ function publicLessonsToStudent(lessons: ApiLesson[]): StudentLesson[] {
   }));
 }
 
-export async function getStudentLanding(slug: string): Promise<StudentLandingData | null> {
+export async function getStudentLanding(
+  slug: string,
+): Promise<StudentLandingData | null> {
   if (apiEnabled()) {
     try {
       const { tenant, track, lessons } = await fetchPublicLanding(slug);
@@ -628,7 +656,8 @@ export async function getStudentLanding(slug: string): Promise<StudentLandingDat
       cumulativeViewers: t.cumulativeViewers,
     },
     lessons: mockStudentLessons,
-    continueLessonId: mockStudentLessons.find((l) => l.status === "playing")?.id,
+    continueLessonId: mockStudentLessons.find((l) => l.status === "playing")
+      ?.id,
     source: "mock",
     noStudentSessionYet: false,
   };
@@ -669,8 +698,12 @@ export async function getStudentLesson(
           plan: "free",
         },
         lesson: { id: cur.id, n: idx, t: cur.title, d: cur.duration_text },
-        prev: prevL ? { id: prevL.id, t: prevL.title, status: prevL.status } : null,
-        next: nextL ? { id: nextL.id, t: nextL.title, status: nextL.status } : null,
+        prev: prevL
+          ? { id: prevL.id, t: prevL.title, status: prevL.status }
+          : null,
+        next: nextL
+          ? { id: nextL.id, t: nextL.title, status: nextL.status }
+          : null,
         // V0.5 起接公众号 OAuth2 后才有真实手机号,这里给占位
         watermarkPhone: "138****0000",
         source: "api",
@@ -685,10 +718,17 @@ export async function getStudentLesson(
   if (idx < 0) return null;
   const cur = mockStudentLessons[idx]!;
   const prev = idx > 0 ? mockStudentLessons[idx - 1]! : null;
-  const next = idx < mockStudentLessons.length - 1 ? mockStudentLessons[idx + 1]! : null;
+  const next =
+    idx < mockStudentLessons.length - 1 ? mockStudentLessons[idx + 1]! : null;
   return {
     tenant: mockTenant,
-    lesson: { id: cur.id, n: cur.n, t: cur.t, d: cur.d, progress: cur.progress },
+    lesson: {
+      id: cur.id,
+      n: cur.n,
+      t: cur.t,
+      d: cur.d,
+      progress: cur.progress,
+    },
     prev: prev ? { id: prev.id, t: prev.t, status: prev.status } : null,
     next: next ? { id: next.id, t: next.t, status: next.status } : null,
     watermarkPhone: mockWatermark,

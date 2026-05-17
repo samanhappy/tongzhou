@@ -30,7 +30,10 @@ const DEFAULT_QUOTAS: Record<MetricKey, { max: number; unit: string }> = {
   "playback.minutes": { max: 1500, unit: "分钟" },
 };
 
-const METRIC_META: Record<MetricKey, { name: string; sub: string; sample: string }> = {
+const METRIC_META: Record<
+  MetricKey,
+  { name: string; sub: string; sample: string }
+> = {
   "members.active_count": {
     name: "月活学员",
     sub: "学员任意一次访问即视为本月活跃 · 月底清零去重",
@@ -79,7 +82,10 @@ export async function recordEvent(input: {
     ]);
 }
 
-export async function recomputeMonth(tenantId: string, period?: string): Promise<void> {
+export async function recomputeMonth(
+  tenantId: string,
+  period?: string,
+): Promise<void> {
   const p = period ?? currentPeriod();
   const { start, end } = periodRange(p);
   const db = getDb();
@@ -96,12 +102,16 @@ export async function recomputeMonth(tenantId: string, period?: string): Promise
         value = row?.n ?? 0;
       } else if (key === "courses.count") {
         const row = await db
-          .prepare(`SELECT COUNT(*) AS n FROM tracks WHERE tenant_id = ? AND status = 'published'`)
+          .prepare(
+            `SELECT COUNT(*) AS n FROM tracks WHERE tenant_id = ? AND status = 'published'`,
+          )
           .get<{ n: number }>([tenantId]);
         value = row?.n ?? 0;
       } else if (key === "storage.bytes") {
         const row = await db
-          .prepare(`SELECT COALESCE(SUM(size_bytes), 0) AS n FROM uploads WHERE tenant_id = ?`)
+          .prepare(
+            `SELECT COALESCE(SUM(size_bytes), 0) AS n FROM uploads WHERE tenant_id = ?`,
+          )
           .get<{ n: number }>([tenantId]);
         value = Number(((row?.n ?? 0) / 1024 / 1024 / 1024).toFixed(2));
       } else if (key === "playback.minutes") {
@@ -139,10 +149,22 @@ async function upsertMeter(
          unit          = excluded.unit,
          updated_at    = excluded.updated_at`,
     )
-    .run([newId("um"), tenantId, key, period, value, q.max, q.unit, Date.now()]);
+    .run([
+      newId("um"),
+      tenantId,
+      key,
+      period,
+      value,
+      q.max,
+      q.unit,
+      Date.now(),
+    ]);
 }
 
-export async function readMeters(tenantId: string, period?: string): Promise<MeterRow[]> {
+export async function readMeters(
+  tenantId: string,
+  period?: string,
+): Promise<MeterRow[]> {
   await recomputeMonth(tenantId, period);
   const p = period ?? currentPeriod();
   const rows = await getDb()

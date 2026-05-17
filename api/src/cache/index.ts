@@ -19,7 +19,8 @@ export function setCache(c: Cache) {
 }
 
 export function getCache(): Cache {
-  if (!_cache) throw new Error("[cache] not initialized. Call setCache() at boot.");
+  if (!_cache)
+    throw new Error("[cache] not initialized. Call setCache() at boot.");
   return _cache;
 }
 

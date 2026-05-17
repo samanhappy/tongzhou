@@ -5,7 +5,12 @@
 
 import { CreatorShell } from "@/components/shell";
 import { I } from "@/components/icons";
-import { Bar, Placeholder, SectionLabel, Sparkline } from "@/components/primitives";
+import {
+  Bar,
+  Placeholder,
+  SectionLabel,
+  Sparkline,
+} from "@/components/primitives";
 import { SourceChip } from "@/components/source-chip";
 import { getDashboardData } from "@/lib/source";
 
@@ -25,9 +30,26 @@ function StatCard({
   foot?: string;
 }) {
   return (
-    <div className="tz-card" style={{ padding: "16px 18px", flex: 1, minWidth: 0 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 11.5, color: "var(--ink-3)", letterSpacing: "0.05em" }}>{label}</span>
+    <div
+      className="tz-card"
+      style={{ padding: "16px 18px", flex: 1, minWidth: 0 }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11.5,
+            color: "var(--ink-3)",
+            letterSpacing: "0.05em",
+          }}
+        >
+          {label}
+        </span>
         {delta != null && delta !== 0 && (
           <span
             style={{
@@ -40,21 +62,40 @@ function StatCard({
           </span>
         )}
       </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 8, marginBottom: 4 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 4,
+          marginTop: 8,
+          marginBottom: 4,
+        }}
+      >
         <span
           className="tz-serif"
-          style={{ fontSize: 28, fontWeight: 500, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}
+          style={{
+            fontSize: 28,
+            fontWeight: 500,
+            fontVariantNumeric: "tabular-nums",
+            lineHeight: 1,
+          }}
         >
           {value}
         </span>
-        {unit && <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{unit}</span>}
+        {unit && (
+          <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{unit}</span>
+        )}
       </div>
       {trend && (
         <div style={{ marginTop: 8, marginBottom: 4, marginLeft: -2 }}>
           <Sparkline values={[...trend]} w={150} h={26} />
         </div>
       )}
-      {foot && <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 6 }}>{foot}</div>}
+      {foot && (
+        <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 6 }}>
+          {foot}
+        </div>
+      )}
     </div>
   );
 }
@@ -75,7 +116,14 @@ function QuotaRow({
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          marginBottom: 6,
+        }}
+      >
         <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{label}</span>
         <span
           style={{
@@ -84,7 +132,8 @@ function QuotaRow({
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          <b style={{ color: "var(--ink)", fontWeight: 500 }}>{value}</b> / {max} {unit}
+          <b style={{ color: "var(--ink)", fontWeight: 500 }}>{value}</b> /{" "}
+          {max} {unit}
         </span>
       </div>
       <Bar value={value} max={max} color={color} />
@@ -93,7 +142,8 @@ function QuotaRow({
 }
 
 export default async function DashboardPage() {
-  const { stats, quotas, courseWatch, activities, source } = await getDashboardData();
+  const { stats, quotas, courseWatch, activities, source } =
+    await getDashboardData();
 
   return (
     <CreatorShell
@@ -105,7 +155,15 @@ export default async function DashboardPage() {
         </button>
       }
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 14 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          marginTop: -10,
+          marginBottom: 14,
+        }}
+      >
         <SourceChip source={source} />
       </div>
 
@@ -123,7 +181,9 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16 }}>
+      <div
+        style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 16 }}
+      >
         {/* 左：课程观看 */}
         <div className="tz-card" style={{ padding: 20 }}>
           <SectionLabel
@@ -150,32 +210,100 @@ export default async function DashboardPage() {
               暂无观看记录 — 学员通过 H5 链接打开后会在此显示
             </div>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 12.5,
+              }}
+            >
               <thead>
-                <tr style={{ color: "var(--ink-3)", fontSize: 11, fontWeight: 400, textAlign: "left" }}>
-                  <th style={{ padding: "8px 0", fontWeight: 400, letterSpacing: "0.05em" }}>课时</th>
-                  <th style={{ padding: "8px 0", fontWeight: 400, width: 80, textAlign: "right" }}>观看人数</th>
-                  <th style={{ padding: "8px 0", fontWeight: 400, width: 100, textAlign: "right" }}>播放分钟</th>
-                  <th style={{ padding: "8px 0", fontWeight: 400, width: 140 }}>完播率</th>
+                <tr
+                  style={{
+                    color: "var(--ink-3)",
+                    fontSize: 11,
+                    fontWeight: 400,
+                    textAlign: "left",
+                  }}
+                >
+                  <th
+                    style={{
+                      padding: "8px 0",
+                      fontWeight: 400,
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    课时
+                  </th>
+                  <th
+                    style={{
+                      padding: "8px 0",
+                      fontWeight: 400,
+                      width: 80,
+                      textAlign: "right",
+                    }}
+                  >
+                    观看人数
+                  </th>
+                  <th
+                    style={{
+                      padding: "8px 0",
+                      fontWeight: 400,
+                      width: 100,
+                      textAlign: "right",
+                    }}
+                  >
+                    播放分钟
+                  </th>
+                  <th style={{ padding: "8px 0", fontWeight: 400, width: 140 }}>
+                    完播率
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {courseWatch.map((r, i) => (
-                  <tr key={i} style={{ borderTop: "1px solid var(--paper-line)" }}>
+                  <tr
+                    key={i}
+                    style={{ borderTop: "1px solid var(--paper-line)" }}
+                  >
                     <td style={{ padding: "11px 0" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
                         <Placeholder w={36} h={22} radius={3} label="" />
                         {r.name}
                       </div>
                     </td>
-                    <td style={{ padding: "11px 0", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                    <td
+                      style={{
+                        padding: "11px 0",
+                        textAlign: "right",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
                       {r.view}
                     </td>
-                    <td style={{ padding: "11px 0", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                    <td
+                      style={{
+                        padding: "11px 0",
+                        textAlign: "right",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
                       {r.mins}
                     </td>
                     <td style={{ padding: "11px 0" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
                         <div style={{ flex: 1 }}>
                           <Bar value={r.complete} />
                         </div>
@@ -270,11 +398,13 @@ export default async function DashboardPage() {
                   </div>
                   <div style={{ flex: 1, fontSize: 12 }}>
                     <div>
-                      <b style={{ fontWeight: 500 }}>{r.who}</b>{" "}
-                      · <span style={{ color: "var(--ink-2)" }}>{r.what}</span>
+                      <b style={{ fontWeight: 500 }}>{r.who}</b> ·{" "}
+                      <span style={{ color: "var(--ink-2)" }}>{r.what}</span>
                     </div>
                   </div>
-                  <span style={{ fontSize: 10.5, color: "var(--ink-3)" }}>{r.t}</span>
+                  <span style={{ fontSize: 10.5, color: "var(--ink-3)" }}>
+                    {r.t}
+                  </span>
                 </div>
               ))
             )}

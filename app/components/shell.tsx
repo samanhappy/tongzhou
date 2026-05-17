@@ -26,25 +26,52 @@ type NavGroup = { group: string; items: NavItem[] };
 const NAV: NavGroup[] = [
   {
     group: "工作台",
-    items: [{ id: "dashboard", label: "数据看板", icon: I.home, href: "/app/dashboard" }],
+    items: [
+      {
+        id: "dashboard",
+        label: "数据看板",
+        icon: I.home,
+        href: "/app/dashboard",
+      },
+    ],
   },
   {
     group: "交付",
     items: [
-      { id: "tracks", label: "课程", icon: I.course, href: "/app/tracks", count: 3 },
+      {
+        id: "tracks",
+        label: "课程",
+        icon: I.course,
+        href: "/app/tracks",
+        count: 3,
+      },
       { id: "library", label: "内容库", icon: I.library, href: "/app/library" },
     ],
   },
   {
     group: "运营",
     items: [
-      { id: "members", label: "学员", icon: I.member, href: "/app/members", count: 142 },
-      { id: "usage", label: "用量计费", icon: I.usage, href: "/app/usage", badge: "82%" },
+      {
+        id: "members",
+        label: "学员",
+        icon: I.member,
+        href: "/app/members",
+        count: 142,
+      },
+      {
+        id: "usage",
+        label: "用量计费",
+        icon: I.usage,
+        href: "/app/usage",
+        badge: "82%",
+      },
     ],
   },
   {
     group: "系统",
-    items: [{ id: "settings", label: "设置", icon: I.cog, href: "/app/settings" }],
+    items: [
+      { id: "settings", label: "设置", icon: I.cog, href: "/app/settings" },
+    ],
   },
 ];
 
@@ -81,11 +108,32 @@ function Sidebar({
       }}
     >
       {/* 品牌 */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 8px 18px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "4px 8px 18px",
+        }}
+      >
         <TZMark size={28} />
         <div>
-          <div className="tz-serif" style={{ fontSize: 17, fontWeight: 500, letterSpacing: "0.04em" }}>同舟</div>
-          <div style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 1, letterSpacing: "0.1em" }}>TONGZHOU</div>
+          <div
+            className="tz-serif"
+            style={{ fontSize: 17, fontWeight: 500, letterSpacing: "0.04em" }}
+          >
+            同舟
+          </div>
+          <div
+            style={{
+              fontSize: 10,
+              color: "var(--ink-3)",
+              marginTop: 1,
+              letterSpacing: "0.1em",
+            }}
+          >
+            TONGZHOU
+          </div>
         </div>
       </div>
 
@@ -106,7 +154,9 @@ function Sidebar({
       >
         <XCMark size={20} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 500, lineHeight: 1.2 }}>{tenantName}</div>
+          <div style={{ fontSize: 12.5, fontWeight: 500, lineHeight: 1.2 }}>
+            {tenantName}
+          </div>
           <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 1 }}>
             {tenantSlug}.tongzhou.app
           </div>
@@ -165,7 +215,10 @@ function Sidebar({
                     }}
                   />
                 )}
-                <Icn size={15} style={{ color: isActive ? "var(--accent)" : "var(--ink-3)" }} />
+                <Icn
+                  size={15}
+                  style={{ color: isActive ? "var(--accent)" : "var(--ink-3)" }}
+                />
                 <span style={{ flex: 1 }}>{it.label}</span>
                 {it.count != null && (
                   <span
@@ -211,8 +264,23 @@ function Sidebar({
           marginBottom: 12,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.05em" }}>当前身份</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 6,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              color: "var(--ink-3)",
+              letterSpacing: "0.05em",
+            }}
+          >
+            当前身份
+          </span>
           {isDev && <span className="tz-chip">DEV</span>}
         </div>
         <div
@@ -239,7 +307,9 @@ function Sidebar({
             {loggingOut ? "退出中…" : "退出登录"}
           </button>
         ) : (
-          <div style={{ fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.6 }}>
+          <div
+            style={{ fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.6 }}
+          >
             当前未接入真实会话，仍处于离线 Demo 模式。
           </div>
         )}
@@ -255,13 +325,32 @@ function Sidebar({
           fontSize: 11.5,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.05em" }}>当前方案</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 6,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              color: "var(--ink-3)",
+              letterSpacing: "0.05em",
+            }}
+          >
+            当前方案
+          </span>
           <span className="tz-chip">FREE</span>
         </div>
         <div style={{ fontSize: 11, color: "var(--ink-2)", marginBottom: 8 }}>
           本月用量{" "}
-          <b style={{ color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>82%</b>
+          <b
+            style={{ color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}
+          >
+            82%
+          </b>
         </div>
         <Bar value={82} />
         <Link
@@ -313,13 +402,20 @@ function Topbar({
           <div style={{ fontSize: 11, color: "var(--ink-3)", marginBottom: 1 }}>
             {breadcrumb.map((b, i) => (
               <span key={i}>
-                {i > 0 && <span style={{ margin: "0 6px", opacity: 0.5 }}>/</span>}
+                {i > 0 && (
+                  <span style={{ margin: "0 6px", opacity: 0.5 }}>/</span>
+                )}
                 {b}
               </span>
             ))}
           </div>
         )}
-        <h1 className="tz-serif" style={{ margin: 0, fontSize: 17, fontWeight: 500 }}>{title}</h1>
+        <h1
+          className="tz-serif"
+          style={{ margin: 0, fontSize: 17, fontWeight: 500 }}
+        >
+          {title}
+        </h1>
       </div>
       <div
         style={{
@@ -337,7 +433,12 @@ function Topbar({
       >
         <I.search size={13} />
         <span style={{ flex: 1 }}>搜索学员、课程…</span>
-        <span className="tz-mono" style={{ fontSize: 10, color: "var(--ink-4)" }}>⌘K</span>
+        <span
+          className="tz-mono"
+          style={{ fontSize: 10, color: "var(--ink-4)" }}
+        >
+          ⌘K
+        </span>
       </div>
       {actions}
       <div style={{ position: "relative" }}>
@@ -394,7 +495,9 @@ export function CreatorShell({
   const tenantName = session?.tenant.name ?? "醒春阁";
   const tenantSlug = session?.tenant.slug ?? "xingchunge";
   const email = session?.user.email ?? "demo@tongzhou.local";
-  const avatarLabel = (session?.user.email || tenantName).slice(0, 1).toUpperCase();
+  const avatarLabel = (session?.user.email || tenantName)
+    .slice(0, 1)
+    .toUpperCase();
 
   async function handleLogout() {
     if (!apiBase) {
@@ -434,8 +537,20 @@ export function CreatorShell({
         tenantName={tenantName}
         tenantSlug={tenantSlug}
       />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <Topbar avatarLabel={avatarLabel} title={title} breadcrumb={breadcrumb} actions={actions} />
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+        }}
+      >
+        <Topbar
+          avatarLabel={avatarLabel}
+          title={title}
+          breadcrumb={breadcrumb}
+          actions={actions}
+        />
         <div
           style={{
             flex: 1,

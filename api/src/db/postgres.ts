@@ -13,7 +13,6 @@
 // schema 启动加载：openPostgres 时执行一次 schema.postgres.sql（IF NOT EXISTS）
 
 import fs from "node:fs";
-import path from "node:path";
 import {
   Pool,
   type PoolClient,
@@ -146,7 +145,7 @@ function makeStmt(pool: Pool, sql: string): PreparedStatement {
     async get<T = unknown>(params?: SqlValue[]) {
       const r = await exec<QueryResultRow>(params);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (r.rows[0] as any) as T | undefined;
+      return r.rows[0] as any as T | undefined;
     },
     async all<T = unknown>(params?: SqlValue[]) {
       const r = await exec<QueryResultRow>(params);
@@ -168,7 +167,9 @@ export function convertPlaceholders(sql: string): string {
   return sql.replace(/\?/g, () => `$${++i}`);
 }
 
-async function pickClient(pool: Pool): Promise<{ exec: PoolClient; release: () => void }> {
+async function pickClient(
+  pool: Pool,
+): Promise<{ exec: PoolClient; release: () => void }> {
   const scope = currentScope();
   if (scope?.client) {
     return { exec: scope.client as PoolClient, release: () => {} };
@@ -196,7 +197,9 @@ export const pgHooks = {
       await c.query("BEGIN");
       if (tenantId) {
         // set_config(..., true) 表示 LOCAL — 仅当前事务生效
-        await c.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantId]);
+        await c.query(`SELECT set_config('app.tenant_id', $1, true)`, [
+          tenantId,
+        ]);
       }
       scope.client = c;
       scope.tenantId = tenantId;

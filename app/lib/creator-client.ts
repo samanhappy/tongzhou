@@ -153,7 +153,12 @@ export function suggestSlug(input: string) {
 }
 
 export function fileNameToTitle(name: string) {
-  return name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim() || "未命名课时";
+  return (
+    name
+      .replace(/\.[^.]+$/, "")
+      .replace(/[_-]+/g, " ")
+      .trim() || "未命名课时"
+  );
 }
 
 export async function updateTenant(base: string, input: TenantPatchInput) {
@@ -190,21 +195,37 @@ export async function createTrack(base: string, input: TrackInput) {
   });
 }
 
-export async function updateTrack(base: string, id: string, input: TrackPatchInput) {
+export async function updateTrack(
+  base: string,
+  id: string,
+  input: TrackPatchInput,
+) {
   return request<{ track: CreatorTrack }>(base, `/api/tracks/${id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
   });
 }
 
-export async function createLesson(base: string, trackId: string, input: LessonInput) {
-  return request<{ lesson: CreatorLesson }>(base, `/api/tracks/${trackId}/lessons`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+export async function createLesson(
+  base: string,
+  trackId: string,
+  input: LessonInput,
+) {
+  return request<{ lesson: CreatorLesson }>(
+    base,
+    `/api/tracks/${trackId}/lessons`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
-export async function updateLesson(base: string, id: string, input: LessonPatchInput) {
+export async function updateLesson(
+  base: string,
+  id: string,
+  input: LessonPatchInput,
+) {
   return request<{ lesson: CreatorLesson }>(base, `/api/lessons/${id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
@@ -217,11 +238,19 @@ export async function deleteLesson(base: string, id: string) {
   });
 }
 
-export async function reorderLessons(base: string, trackId: string, orderedIds: string[]) {
-  return request<{ ok: boolean; lessons: CreatorLesson[] }>(base, `/api/tracks/${trackId}/lessons/reorder`, {
-    method: "POST",
-    body: JSON.stringify({ orderedIds }),
-  });
+export async function reorderLessons(
+  base: string,
+  trackId: string,
+  orderedIds: string[],
+) {
+  return request<{ ok: boolean; lessons: CreatorLesson[] }>(
+    base,
+    `/api/tracks/${trackId}/lessons/reorder`,
+    {
+      method: "POST",
+      body: JSON.stringify({ orderedIds }),
+    },
+  );
 }
 
 export async function uploadFile(base: string, file: File) {

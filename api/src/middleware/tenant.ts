@@ -62,9 +62,9 @@ function toTenantCtx(tenant: tenantsRepo.Tenant): TenantCtx {
   };
 }
 
-async function resolveSession(req: FastifyRequest): Promise<
-  { auth: AuthCtx; tenant: TenantCtx } | undefined
-> {
+async function resolveSession(
+  req: FastifyRequest,
+): Promise<{ auth: AuthCtx; tenant: TenantCtx } | undefined> {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) return undefined;
 
@@ -106,61 +106,68 @@ export function registerTenantHook(app: FastifyInstance) {
   });
 
   // 2. preHandler: 解析 tenant + (PG) attach client
-  app.addHook("preHandler", async (req: FastifyRequest, reply: FastifyReply) => {
-    const pathname = pathOf(req);
-    if (!pathname.startsWith("/api/")) return;
+  app.addHook(
+    "preHandler",
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const pathname = pathOf(req);
+      if (!pathname.startsWith("/api/")) return;
 
-    let tenantId: string | undefined;
+      let tenantId: string | undefined;
 
-    // 公开学员接口：从 URL 解析 slug
-    if (pathname.startsWith("/api/x/")) {
-      const m = /^\/api\/x\/([^/?]+)/.exec(pathname);
-      const slug = m?.[1];
-      if (slug) {
-        const t = await tenantsRepo.getBySlug(decodeURIComponent(slug));
-        if (t) {
-          req.tenant = toTenantCtx(t);
-          tenantId = t.id;
+      // 公开学员接口：从 URL 解析 slug
+      if (pathname.startsWith("/api/x/")) {
+        const m = /^\/api\/x\/([^/?]+)/.exec(pathname);
+        const slug = m?.[1];
+        if (slug) {
+          const t = await tenantsRepo.getBySlug(decodeURIComponent(slug));
+          if (t) {
+            req.tenant = toTenantCtx(t);
+            tenantId = t.id;
+          }
         }
+        // 学员接口找不到 tenant 不直接挡（让 handler 决定 404/200）
       }
-      // 学员接口找不到 tenant 不直接挡（让 handler 决定 404/200）
-    }
-    // 注册 / 健康检查 / 直接放行
-    else if ((pathname.startsWith("/api/tenants") && req.method === "POST") || PUBLIC_NO_AUTH_PATHS.has(pathname)) {
-      // pass
-    } else {
-      const session = await resolveSession(req);
-      if (session) {
-        req.auth = session.auth;
-        req.tenant = session.tenant;
-        tenantId = session.tenant.id;
-      } else if (config.auth.devMode) {
-        const slug = headerSlug(req);
-        if (!slug) {
-          return reply.code(401).send({ error: "missing session" });
-        }
-        const t = await tenantsRepo.getBySlug(slug);
-        if (!t) return reply.code(404).send({ error: `tenant not found: ${slug}` });
-        req.tenant = toTenantCtx(t);
-        req.auth = buildDevAuth(req.tenant);
-        tenantId = t.id;
+      // 注册 / 健康检查 / 直接放行
+      else if (
+        (pathname.startsWith("/api/tenants") && req.method === "POST") ||
+        PUBLIC_NO_AUTH_PATHS.has(pathname)
+      ) {
+        // pass
       } else {
-        return reply.code(401).send({ error: "invalid or missing session" });
+        const session = await resolveSession(req);
+        if (session) {
+          req.auth = session.auth;
+          req.tenant = session.tenant;
+          tenantId = session.tenant.id;
+        } else if (config.auth.devMode) {
+          const slug = headerSlug(req);
+          if (!slug) {
+            return reply.code(401).send({ error: "missing session" });
+          }
+          const t = await tenantsRepo.getBySlug(slug);
+          if (!t)
+            return reply.code(404).send({ error: `tenant not found: ${slug}` });
+          req.tenant = toTenantCtx(t);
+          req.auth = buildDevAuth(req.tenant);
+          tenantId = t.id;
+        } else {
+          return reply.code(401).send({ error: "invalid or missing session" });
+        }
       }
-    }
 
-    // 3. PG 模式：checkout 一个 client + BEGIN + SET LOCAL app.tenant_id
-    const db = getDb();
-    if (db.driver === "postgres" && tenantId) {
-      const { pgHooks } = await import("../db/postgres.js");
-      // 拿到 pool —— wrap 出来的 db 上暴露了 __pool
-      const pool = (db as unknown as { __pool: import("pg").Pool }).__pool;
-      const scope = requestScope.getStore();
-      if (scope && pool) {
-        await pgHooks.attachClient(pool, scope, tenantId);
+      // 3. PG 模式：checkout 一个 client + BEGIN + SET LOCAL app.tenant_id
+      const db = getDb();
+      if (db.driver === "postgres" && tenantId) {
+        const { pgHooks } = await import("../db/postgres.js");
+        // 拿到 pool —— wrap 出来的 db 上暴露了 __pool
+        const pool = (db as unknown as { __pool: import("pg").Pool }).__pool;
+        const scope = requestScope.getStore();
+        if (scope && pool) {
+          await pgHooks.attachClient(pool, scope, tenantId);
+        }
       }
-    }
-  });
+    },
+  );
 
   // 3. onResponse: PG 模式下 COMMIT / ROLLBACK 并归还 client
   app.addHook("onResponse", async (req, reply) => {
@@ -185,6 +192,7 @@ export function registerTenantHook(app: FastifyInstance) {
 }
 
 export function requireTenant(req: FastifyRequest): TenantCtx {
-  if (!req.tenant) throw new Error("[tenant] missing — route must be under withTenant");
+  if (!req.tenant)
+    throw new Error("[tenant] missing — route must be under withTenant");
   return req.tenant;
 }

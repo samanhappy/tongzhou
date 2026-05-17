@@ -7,7 +7,9 @@ export function H5Brand({ compact = false }: { compact?: boolean }) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <XCMark size={22} />
-        <span className="tz-serif" style={{ fontSize: 15, fontWeight: 500 }}>醒春阁</span>
+        <span className="tz-serif" style={{ fontSize: 15, fontWeight: 500 }}>
+          醒春阁
+        </span>
       </div>
     );
   }

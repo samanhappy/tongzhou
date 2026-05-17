@@ -21,11 +21,16 @@ export type Member = {
 
 export async function listByTenant(tenantId: string): Promise<Member[]> {
   return getDb()
-    .prepare(`SELECT * FROM members WHERE tenant_id = ? ORDER BY created_at DESC`)
+    .prepare(
+      `SELECT * FROM members WHERE tenant_id = ? ORDER BY created_at DESC`,
+    )
     .all<Member>([tenantId]);
 }
 
-export async function getById(tenantId: string, id: string): Promise<Member | undefined> {
+export async function getById(
+  tenantId: string,
+  id: string,
+): Promise<Member | undefined> {
   return getDb()
     .prepare(`SELECT * FROM members WHERE tenant_id = ? AND id = ?`)
     .get<Member>([tenantId, id]);

@@ -1,0 +1,16 @@
+.DS_Store
+*.log
+*.tsbuildinfo
+.claude/
+
+**/node_modules/
+**/.next/
+**/dist/
+**/coverage/
+**/out/
+
+api/data/
+api/.tmp/
+api/uploads/
+app/playwright-report/
+app/test-results/

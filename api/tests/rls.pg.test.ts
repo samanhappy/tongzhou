@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { bootTestApp, createTrack, registerOwner, uniqueSlug } from "./helpers/test-app.js";
+import {
+  bootTestApp,
+  createTrack,
+  registerOwner,
+  uniqueSlug,
+} from "./helpers/test-app.js";
 
 const pgUrl = process.env.TEST_PG_DATABASE_URL;
 
@@ -36,7 +41,9 @@ describe.skipIf(!pgUrl)("postgres row level security", () => {
     await pgHooks.attachClient(db.__pool, scope, ownerA.tenant.id);
     try {
       const tenantMarker = await requestScope.run(scope, async () =>
-        getDb().prepare(`SELECT app_current_tenant() AS tenant`).get<{ tenant: string }>([]),
+        getDb()
+          .prepare(`SELECT app_current_tenant() AS tenant`)
+          .get<{ tenant: string }>([]),
       );
       expect(tenantMarker?.tenant).toBe(ownerA.tenant.id);
 

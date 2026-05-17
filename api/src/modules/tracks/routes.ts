@@ -20,16 +20,16 @@ export async function registerTrackRoutes(app: FastifyInstance) {
     return { track, lessons: ls };
   });
 
-  app.post<{ Body: { slug: string; title: string; subtitle?: string; oneLine?: string } }>(
-    "/api/tracks",
-    async (req) => {
-      const t = requireTenant(req);
-      const { slug, title } = req.body ?? {};
-      if (!slug || !title) throw new HttpError(400, "slug & title required");
-      if (await repo.getBySlug(t.id, slug)) throw new HttpError(409, "slug exists");
-      return { track: await repo.create(t.id, req.body!) };
-    },
-  );
+  app.post<{
+    Body: { slug: string; title: string; subtitle?: string; oneLine?: string };
+  }>("/api/tracks", async (req) => {
+    const t = requireTenant(req);
+    const { slug, title } = req.body ?? {};
+    if (!slug || !title) throw new HttpError(400, "slug & title required");
+    if (await repo.getBySlug(t.id, slug))
+      throw new HttpError(409, "slug exists");
+    return { track: await repo.create(t.id, req.body!) };
+  });
 
   app.patch<{
     Params: { id: string };

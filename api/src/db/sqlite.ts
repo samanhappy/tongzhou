@@ -56,16 +56,19 @@ function wrap(handle: Database): Db {
 function adaptStmt(stmt: Statement): PreparedStatement {
   return {
     async run(params) {
-      const result = params == null ? stmt.run() : stmt.run(...(params as SqlValue[]));
+      const result =
+        params == null ? stmt.run() : stmt.run(...(params as SqlValue[]));
       return { changes: result.changes };
     },
     async get(params) {
-      const row = params == null ? stmt.get() : stmt.get(...(params as SqlValue[]));
+      const row =
+        params == null ? stmt.get() : stmt.get(...(params as SqlValue[]));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return row as any;
     },
     async all(params) {
-      const rows = params == null ? stmt.all() : stmt.all(...(params as SqlValue[]));
+      const rows =
+        params == null ? stmt.all() : stmt.all(...(params as SqlValue[]));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return rows as any;
     },

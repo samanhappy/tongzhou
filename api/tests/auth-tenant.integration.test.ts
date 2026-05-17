@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { bootTestApp, createTrack, registerOwner, responseJson, uniqueSlug } from "./helpers/test-app.js";
+import {
+  bootTestApp,
+  createTrack,
+  registerOwner,
+  responseJson,
+  uniqueSlug,
+} from "./helpers/test-app.js";
 
 describe("auth session and tenant isolation", () => {
   let close: (() => Promise<void>) | undefined;

@@ -22,7 +22,7 @@ export function createMemoryCache(): Cache {
     driver: "memory",
     async get<T>(k: string) {
       const e = fresh(k);
-      return (e ? (e.value as T) : null);
+      return e ? (e.value as T) : null;
     },
     async set(k, v, ttlSec) {
       const expiresAt = ttlSec ? Date.now() + ttlSec * 1000 : undefined;
