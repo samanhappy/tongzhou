@@ -1,9 +1,14 @@
 // 创作者后台 · 设置 · 品牌
 // 来自 design/creator-other.jsx · CreatorSettings
+//
+// 数据走 lib/source.ts —— 读 Tenant
+// V0：纯展示 + defaultValue 由后端值填充；保存动作待 V0.5
 
 import { CreatorShell } from "@/components/shell";
 import { I } from "@/components/icons";
 import { SectionLabel, XCMark } from "@/components/primitives";
+import { SourceChip } from "@/components/source-chip";
+import { getSourceLabel, getTenant } from "@/lib/source";
 import type { ReactNode } from "react";
 
 function Field({
@@ -26,16 +31,30 @@ function Field({
   );
 }
 
-export default function SettingsPage() {
+const THEMES = [
+  { hex: "#1a4d4a", hue: 162, name: "墨青" },
+  { hex: "#7a2e1f", hue: 28, name: "胭脂" },
+  { hex: "#1e3a8a", hue: 268, name: "藏蓝" },
+  { hex: "#0c0c0c", hue: 60, name: "墨" },
+  { hex: "#c2410c", hue: 38, name: "丹" },
+] as const;
+
+export default async function SettingsPage() {
+  const tenant = await getTenant();
+  const source = getSourceLabel();
+
   return (
-    <CreatorShell title="设置 · 品牌" breadcrumb={["醒春阁", "系统"]}>
+    <CreatorShell title="设置 · 品牌" breadcrumb={[tenant.name, "系统"]}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 14 }}>
+        <SourceChip source={source} />
+      </div>
+
       <div
         style={{
           display: "flex",
           gap: 0,
           marginBottom: 22,
           borderBottom: "1px solid var(--paper-line)",
-          marginTop: -10,
         }}
       >
         {[
@@ -51,14 +70,8 @@ export default function SettingsPage() {
             style={{
               borderRadius: 0,
               padding: "8px 14px",
-              color: t.active
-                ? "var(--ink)"
-                : t.soon
-                  ? "var(--ink-4)"
-                  : "var(--ink-3)",
-              borderBottom: t.active
-                ? "2px solid var(--accent)"
-                : "2px solid transparent",
+              color: t.active ? "var(--ink)" : t.soon ? "var(--ink-4)" : "var(--ink-3)",
+              borderBottom: t.active ? "2px solid var(--accent)" : "2px solid transparent",
               marginBottom: -1,
               fontWeight: t.active ? 500 : 400,
               display: "inline-flex",
@@ -68,15 +81,7 @@ export default function SettingsPage() {
           >
             {t.l}
             {t.soon && (
-              <span
-                style={{
-                  fontSize: 9.5,
-                  color: "var(--ink-4)",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                V1
-              </span>
+              <span style={{ fontSize: 9.5, color: "var(--ink-4)", letterSpacing: "0.06em" }}>V1</span>
             )}
           </button>
         ))}
@@ -97,54 +102,39 @@ export default function SettingsPage() {
           </Field>
 
           <Field label="空间名称" desc="将显示在学员 H5 页头与浏览器标签">
-            <input className="tz-input" defaultValue="醒春阁" />
+            <input className="tz-input" defaultValue={tenant.name} />
           </Field>
 
           <Field label="一句话简介" desc="学员落地页副标 · ≤ 40 字">
-            <input
-              className="tz-input"
-              defaultValue="七天清晨的写作陪跑 · 一念一札，从见我到见今。"
-            />
+            <input className="tz-input" defaultValue={tenant.tagline} />
           </Field>
 
           <Field label="主题色" desc="将应用于学员 H5 主按钮与重点色">
             <div style={{ display: "flex", gap: 8 }}>
-              {(
-                [
-                  ["#1a4d4a", true, "墨青"],
-                  ["#7a2e1f", false, "胭脂"],
-                  ["#1e3a8a", false, "藏蓝"],
-                  ["#0c0c0c", false, "墨"],
-                  ["#c2410c", false, "丹"],
-                ] as const
-              ).map(([c, on, n]) => (
-                <button
-                  key={c}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: 6,
-                    borderRadius: 6,
-                    border: on
-                      ? "1px solid var(--ink)"
-                      : "1px solid var(--paper-edge)",
-                    background: "#fff",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
+              {THEMES.map((th) => {
+                const on = th.hue === tenant.themeHue;
+                return (
+                  <button
+                    key={th.hex}
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 999,
-                      background: c,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: 6,
+                      borderRadius: 6,
+                      border: on
+                        ? "1px solid var(--ink)"
+                        : "1px solid var(--paper-edge)",
+                      background: "#fff",
+                      cursor: "pointer",
                     }}
-                  />
-                  <span style={{ fontSize: 10.5, color: "var(--ink-2)" }}>{n}</span>
-                </button>
-              ))}
+                  >
+                    <div style={{ width: 28, height: 28, borderRadius: 999, background: th.hex }} />
+                    <span style={{ fontSize: 10.5, color: "var(--ink-2)" }}>{th.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </Field>
 
@@ -152,7 +142,7 @@ export default function SettingsPage() {
             <div style={{ display: "flex", alignItems: "stretch", gap: 0 }}>
               <input
                 className="tz-input"
-                defaultValue="xingchunge"
+                defaultValue={tenant.slug}
                 style={{
                   borderTopRightRadius: 0,
                   borderBottomRightRadius: 0,
@@ -180,10 +170,7 @@ export default function SettingsPage() {
           </Field>
 
           <Field label="加群链接" desc="学员页底部「加群联系老师」按钮指向">
-            <input
-              className="tz-input"
-              defaultValue="https://work.weixin.qq.com/kfid/xingchunge"
-            />
+            <input className="tz-input" defaultValue={tenant.groupLink} />
           </Field>
 
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -208,21 +195,15 @@ export default function SettingsPage() {
           >
             <div style={{ padding: "30px 22px 12px", textAlign: "center" }}>
               <XCMark size={48} />
-              <div
-                className="tz-serif"
-                style={{ fontSize: 18, fontWeight: 500, marginTop: 10 }}
-              >
-                醒春阁
+              <div className="tz-serif" style={{ fontSize: 18, fontWeight: 500, marginTop: 10 }}>
+                {tenant.name}
               </div>
               <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>
-                七天清晨的写作陪跑
+                {tenant.tagline.slice(0, 20)}
               </div>
             </div>
             <div style={{ padding: "0 16px 16px" }}>
-              <div
-                className="tz-serif"
-                style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}
-              >
+              <div className="tz-serif" style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
                 七天成长计划 · 习作启蒙
               </div>
               <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginBottom: 12 }}>

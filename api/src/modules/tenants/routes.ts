@@ -15,10 +15,12 @@ export async function registerTenantRoutes(app: FastifyInstance) {
     },
   );
 
-  // 当前 Tenant 概要（前端通过 header 注入）
+  // 当前 Tenant 完整记录（前端通过 header 解析,这里返回完整字段）
   app.get("/api/tenants/me", async (req) => {
     if (!req.tenant) throw new HttpError(401, "no tenant context");
-    return { tenant: req.tenant };
+    const full = repo.getById(req.tenant.id);
+    if (!full) throw new HttpError(404, "tenant not found");
+    return { tenant: full };
   });
 
   // 更新品牌

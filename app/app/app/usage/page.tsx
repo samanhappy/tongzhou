@@ -1,11 +1,14 @@
 // 创作者后台 · 用量计费（V0 核心差异化页面）
 // 来自 design/creator-other.jsx · CreatorUsage
 // 4 维度计量 + Freemium 状态 + 降级路径
+//
+// 数据走 lib/source.ts
 
 import { CreatorShell } from "@/components/shell";
 import { I } from "@/components/icons";
 import { Bar, SectionLabel } from "@/components/primitives";
-import { usageMeters } from "@/lib/mock";
+import { SourceChip } from "@/components/source-chip";
+import { getUsageData } from "@/lib/source";
 
 function MeterCard({
   name,
@@ -24,7 +27,7 @@ function MeterCard({
   sub: string;
   sample: string;
 }) {
-  const pct = Math.round((value / max) * 100);
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   const tone = pct > 100 ? "var(--danger)" : pct > 80 ? "var(--warn)" : "var(--accent)";
   return (
     <div className="tz-card" style={{ padding: 20 }}>
@@ -59,22 +62,16 @@ function MeterCard({
       <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "10px 0 8px" }}>
         <span
           className="tz-serif"
-          style={{
-            fontSize: 30,
-            fontWeight: 500,
-            fontVariantNumeric: "tabular-nums",
-          }}
+          style={{ fontSize: 30, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}
         >
-          {value}
+          {typeof value === "number" && value % 1 !== 0 ? value.toFixed(2) : value}
         </span>
         <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
           / {max} {unit}
         </span>
       </div>
       <Bar value={Math.min(value, max)} max={max} color={tone} />
-      <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 8, lineHeight: 1.6 }}>
-        {sub}
-      </div>
+      <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 8, lineHeight: 1.6 }}>{sub}</div>
       <div
         style={{
           marginTop: 12,
@@ -93,7 +90,10 @@ function MeterCard({
   );
 }
 
-export default function UsagePage() {
+export default async function UsagePage() {
+  const { meters, totalPct, source } = await getUsageData();
+  const remaining = Math.max(0, 100 - totalPct);
+
   return (
     <CreatorShell
       title="用量计费"
@@ -107,6 +107,10 @@ export default function UsagePage() {
         </>
       }
     >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 14 }}>
+        <SourceChip source={source} />
+      </div>
+
       {/* 当前方案 */}
       <div
         className="tz-card"
@@ -120,14 +124,7 @@ export default function UsagePage() {
         }}
       >
         <div>
-          <div
-            style={{
-              fontSize: 10.5,
-              color: "var(--ink-3)",
-              letterSpacing: "0.08em",
-              marginBottom: 4,
-            }}
-          >
+          <div style={{ fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.08em", marginBottom: 4 }}>
             当前方案
           </div>
           <div className="tz-serif" style={{ fontSize: 19, fontWeight: 500 }}>
@@ -138,62 +135,27 @@ export default function UsagePage() {
           </div>
         </div>
         <div>
-          <div
-            style={{
-              fontSize: 10.5,
-              color: "var(--ink-3)",
-              letterSpacing: "0.08em",
-              marginBottom: 4,
-            }}
-          >
+          <div style={{ fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.08em", marginBottom: 4 }}>
             本月用量比例
           </div>
-          <div
-            className="tz-serif"
-            style={{
-              fontSize: 22,
-              fontWeight: 500,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            82%
+          <div className="tz-serif" style={{ fontSize: 22, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>
+            {totalPct}%
           </div>
-          <div style={{ fontSize: 11, color: "var(--warn)", marginTop: 2 }}>
-            距软超额还有 18%
+          <div style={{ fontSize: 11, color: totalPct > 80 ? "var(--warn)" : "var(--ink-3)", marginTop: 2 }}>
+            距软超额还有 {remaining}%
           </div>
         </div>
         <div>
-          <div
-            style={{
-              fontSize: 10.5,
-              color: "var(--ink-3)",
-              letterSpacing: "0.08em",
-              marginBottom: 4,
-            }}
-          >
+          <div style={{ fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.08em", marginBottom: 4 }}>
             预估超额费用
           </div>
-          <div
-            className="tz-serif"
-            style={{
-              fontSize: 22,
-              fontWeight: 500,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
+          <div className="tz-serif" style={{ fontSize: 22, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>
             ¥ 0
           </div>
           <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>当前在免费额内</div>
         </div>
         <div>
-          <div
-            style={{
-              fontSize: 10.5,
-              color: "var(--ink-3)",
-              letterSpacing: "0.08em",
-              marginBottom: 4,
-            }}
-          >
+          <div style={{ fontSize: 10.5, color: "var(--ink-3)", letterSpacing: "0.08em", marginBottom: 4 }}>
             下次对账
           </div>
           <div className="tz-serif" style={{ fontSize: 22, fontWeight: 500 }}>
@@ -202,30 +164,16 @@ export default function UsagePage() {
           <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>15 天后</div>
         </div>
         <div style={{ borderLeft: "1px solid var(--paper-line)", paddingLeft: 18 }}>
-          <div
-            style={{
-              fontSize: 11,
-              color: "var(--ink-2)",
-              marginBottom: 8,
-              lineHeight: 1.5,
-            }}
-          >
+          <div style={{ fontSize: 11, color: "var(--ink-2)", marginBottom: 8, lineHeight: 1.5 }}>
             升级到 <b>Pro</b> 解锁更多额度 + 按量阶梯单价
           </div>
-          <button
-            className="tz-btn tz-btn-primary"
-            style={{ width: "100%", justifyContent: "center" }}
-          >
+          <button className="tz-btn tz-btn-primary" style={{ width: "100%", justifyContent: "center" }}>
             查看方案
           </button>
         </div>
       </div>
 
-      <SectionLabel
-        stamp="量"
-        title="本月用量 · 四维度"
-        sub="每日刷新 · 事件流可重算"
-      />
+      <SectionLabel stamp="量" title="本月用量 · 四维度" sub="每日刷新 · 事件流可重算" />
 
       <div
         style={{
@@ -235,7 +183,7 @@ export default function UsagePage() {
           marginBottom: 22,
         }}
       >
-        {usageMeters.map((m) => (
+        {meters.map((m) => (
           <MeterCard
             key={m.key}
             name={m.name}
@@ -252,30 +200,14 @@ export default function UsagePage() {
       {/* 降级策略 */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
         <div className="tz-card" style={{ padding: 20 }}>
-          <SectionLabel
-            stamp="级"
-            title="超额降级路径"
-            sub="学员观看体验永不受影响"
-          />
+          <SectionLabel stamp="级" title="超额降级路径" sub="学员观看体验永不受影响" />
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
-              <tr
-                style={{
-                  color: "var(--ink-3)",
-                  fontSize: 10.5,
-                  letterSpacing: "0.05em",
-                }}
-              >
-                <th style={{ textAlign: "left", padding: "6px 0", fontWeight: 400 }}>
-                  用量比例
-                </th>
+              <tr style={{ color: "var(--ink-3)", fontSize: 10.5, letterSpacing: "0.05em" }}>
+                <th style={{ textAlign: "left", padding: "6px 0", fontWeight: 400 }}>用量比例</th>
                 <th style={{ textAlign: "left", padding: "6px 0", fontWeight: 400 }}>状态</th>
-                <th style={{ textAlign: "left", padding: "6px 0", fontWeight: 400 }}>
-                  创作者侧
-                </th>
-                <th style={{ textAlign: "left", padding: "6px 0", fontWeight: 400 }}>
-                  学员侧
-                </th>
+                <th style={{ textAlign: "left", padding: "6px 0", fontWeight: 400 }}>创作者侧</th>
+                <th style={{ textAlign: "left", padding: "6px 0", fontWeight: 400 }}>学员侧</th>
               </tr>
             </thead>
             <tbody>
@@ -300,14 +232,7 @@ export default function UsagePage() {
                 ] as const
               ).map((r, i) => (
                 <tr key={i} style={{ borderTop: "1px solid var(--paper-line)" }}>
-                  <td
-                    style={{
-                      padding: "11px 0",
-                      fontFamily: "var(--mono)",
-                      fontSize: 11,
-                      color: "var(--ink-2)",
-                    }}
-                  >
+                  <td style={{ padding: "11px 0", fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-2)" }}>
                     {r[0]}
                   </td>
                   <td style={{ padding: "11px 0" }}>
@@ -376,33 +301,17 @@ export default function UsagePage() {
               }}
             >
               <div>
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    fontFamily: "var(--mono)",
-                  }}
-                >
-                  {b.p}
-                </div>
+                <div style={{ fontSize: 12.5, fontWeight: 500, fontFamily: "var(--mono)" }}>{b.p}</div>
                 <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 2 }}>
                   {b.st === "draft" ? "进行中 · 仍在累计" : "已结清"}
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontVariantNumeric: "tabular-nums",
-                    fontWeight: 500,
-                  }}
-                >
+                <div style={{ fontSize: 13, fontVariantNumeric: "tabular-nums", fontWeight: 500 }}>
                   {b.amt}
                 </div>
                 {b.st === "paid" && (
-                  <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 2 }}>
-                    查看明细
-                  </div>
+                  <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 2 }}>查看明细</div>
                 )}
               </div>
             </div>

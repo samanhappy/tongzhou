@@ -1,20 +1,25 @@
 // 学员 H5 · 「我的」抽屉
 // 可选绑定手机号；不绑定时进度仅保存在本设备
 // 来自 design/student-h5.jsx · H5Me
+//
+// 数据走 lib/source.ts
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { I } from "@/components/icons";
 import { Bar, Placeholder } from "@/components/primitives";
-import { tenant } from "@/lib/mock";
+import { SourceChip } from "@/components/source-chip";
+import { getStudentMe } from "@/lib/source";
 
 export default async function StudentMe({
-  params
+  params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  if (slug !== tenant.slug) notFound();
+  const data = await getStudentMe(slug);
+  if (!data) notFound();
+  const { tenant, source } = data;
 
   return (
     <div className="tz-paper" style={{ minHeight: "100%", paddingBottom: 100 }}>
@@ -23,7 +28,7 @@ export default async function StudentMe({
           padding: "20px 18px 14px",
           display: "flex",
           alignItems: "center",
-          gap: 10
+          gap: 10,
         }}
       >
         <Link
@@ -32,7 +37,7 @@ export default async function StudentMe({
             background: "transparent",
             border: 0,
             color: "var(--ink-2)",
-            display: "inline-flex"
+            display: "inline-flex",
           }}
         >
           <I.back size={16} />
@@ -40,6 +45,8 @@ export default async function StudentMe({
         <span className="tz-serif" style={{ fontSize: 15, fontWeight: 500 }}>
           我的
         </span>
+        <div style={{ flex: 1 }} />
+        <SourceChip source={source} />
       </div>
 
       {/* 当前身份 */}
@@ -52,7 +59,7 @@ export default async function StudentMe({
             padding: "18px",
             display: "flex",
             alignItems: "center",
-            gap: 14
+            gap: 14,
           }}
         >
           <div
@@ -67,7 +74,7 @@ export default async function StudentMe({
               justifyContent: "center",
               fontFamily: "var(--serif)",
               fontSize: 22,
-              flex: "0 0 auto"
+              flex: "0 0 auto",
             }}
           >
             ?
@@ -88,7 +95,7 @@ export default async function StudentMe({
             background: "var(--accent-soft)",
             border:
               "1px solid color-mix(in oklch, var(--accent) 18%, transparent)",
-            borderRadius: 10
+            borderRadius: 10,
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -97,7 +104,7 @@ export default async function StudentMe({
               style={{
                 color: "var(--accent-deep)",
                 marginTop: 1,
-                flex: "0 0 auto"
+                flex: "0 0 auto",
               }}
             />
             <div>
@@ -105,7 +112,7 @@ export default async function StudentMe({
                 style={{
                   fontSize: 13,
                   fontWeight: 500,
-                  color: "var(--accent-deep)"
+                  color: "var(--accent-deep)",
                 }}
               >
                 绑定手机号 · 跨设备同步
@@ -116,7 +123,7 @@ export default async function StudentMe({
                   color: "var(--accent-deep)",
                   opacity: 0.85,
                   marginTop: 4,
-                  lineHeight: 1.6
+                  lineHeight: 1.6,
                 }}
               >
                 绑定后，你的进度可以在手机、平板、桌面上继续看。完全可选。
@@ -133,7 +140,7 @@ export default async function StudentMe({
               border: 0,
               borderRadius: 6,
               fontSize: 12.5,
-              fontWeight: 500
+              fontWeight: 500,
             }}
           >
             绑定手机号
@@ -159,7 +166,7 @@ export default async function StudentMe({
                 display: "flex",
                 gap: 12,
                 alignItems: "center",
-                color: "inherit"
+                color: "inherit",
               }}
             >
               <Placeholder w={60} h={60} radius={6} label="" />
@@ -168,7 +175,7 @@ export default async function StudentMe({
                   style={{
                     fontSize: 12.5,
                     fontWeight: 500,
-                    marginBottom: 3
+                    marginBottom: 3,
                   }}
                 >
                   七天成长计划 · 习作启蒙
@@ -177,7 +184,7 @@ export default async function StudentMe({
                   style={{
                     fontSize: 10.5,
                     color: "var(--ink-3)",
-                    marginBottom: 8
+                    marginBottom: 8,
                   }}
                 >
                   {tenant.name}
@@ -190,7 +197,7 @@ export default async function StudentMe({
                     style={{
                       fontSize: 10.5,
                       color: "var(--ink-2)",
-                      fontVariantNumeric: "tabular-nums"
+                      fontVariantNumeric: "tabular-nums",
                     }}
                   >
                     28%
@@ -205,7 +212,7 @@ export default async function StudentMe({
                 fontSize: 11.5,
                 color: "var(--ink-3)",
                 border: "1px dashed var(--paper-edge)",
-                borderRadius: 10
+                borderRadius: 10,
               }}
             >
               通过分享链接打开更多课程
@@ -223,7 +230,7 @@ export default async function StudentMe({
             fontSize: 10.5,
             color: "var(--ink-4)",
             textAlign: "center",
-            lineHeight: 1.8
+            lineHeight: 1.8,
           }}
         >
           由 同舟 提供轻量化课程交付

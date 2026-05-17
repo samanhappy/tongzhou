@@ -1,26 +1,26 @@
 // 学员 H5 · 播放页（含手机号水印）
 // V0 红线：水印来自 V0 文档「视频防盗链 + 学员手机号水印」
 // 来自 design/student-h5.jsx · H5Player
+//
+// 数据走 lib/source.ts
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { I } from "@/components/icons";
 import { Placeholder, WatermarkLayer } from "@/components/primitives";
-import { studentLessons, tenant, watermarkPhone } from "@/lib/mock";
+import { SourceChip } from "@/components/source-chip";
+import { getStudentLesson } from "@/lib/source";
 
 export default async function StudentPlayer({
-  params
+  params,
 }: {
   params: Promise<{ slug: string; lessonId: string }>;
 }) {
   const { slug, lessonId } = await params;
-  if (slug !== tenant.slug) notFound();
+  const data = await getStudentLesson(slug, lessonId);
+  if (!data) notFound();
 
-  const idx = studentLessons.findIndex((l) => l.id === lessonId);
-  if (idx < 0) notFound();
-  const lesson = studentLessons[idx];
-  const prev = idx > 0 ? studentLessons[idx - 1] : null;
-  const next = idx < studentLessons.length - 1 ? studentLessons[idx + 1] : null;
+  const { tenant, lesson, prev, next, watermarkPhone, source } = data;
 
   return (
     <div style={{ minHeight: "100%", background: "#0e0e0c", color: "#f0eee9" }}>
@@ -32,7 +32,7 @@ export default async function StudentPlayer({
           padding: "12px 16px",
           gap: 12,
           position: "relative",
-          zIndex: 2
+          zIndex: 2,
         }}
       >
         <Link
@@ -47,7 +47,7 @@ export default async function StudentPlayer({
             alignItems: "center",
             justifyContent: "center",
             color: "#f0eee9",
-            flex: "0 0 auto"
+            flex: "0 0 auto",
           }}
         >
           <I.back size={15} />
@@ -59,24 +59,17 @@ export default async function StudentPlayer({
               fontWeight: 500,
               overflow: "hidden",
               textOverflow: "ellipsis",
-              whiteSpace: "nowrap"
+              whiteSpace: "nowrap",
             }}
           >
             {lesson.t}
           </div>
-          <div
-            style={{
-              fontSize: 10,
-              color: "rgba(255,255,255,0.55)",
-              marginTop: 2
-            }}
-          >
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
             {tenant.name} · 七天成长计划
           </div>
         </div>
-        <button
-          style={{ background: "transparent", border: 0, color: "#f0eee9" }}
-        >
+        <SourceChip source={source} />
+        <button style={{ background: "transparent", border: 0, color: "#f0eee9" }}>
           <I.share size={16} />
         </button>
       </div>
@@ -87,16 +80,10 @@ export default async function StudentPlayer({
           position: "relative",
           aspectRatio: "16 / 10",
           overflow: "hidden",
-          background: "#000"
+          background: "#000",
         }}
       >
-        <Placeholder
-          w="100%"
-          h="100%"
-          radius={0}
-          dark
-          label="封面 · 春日小院"
-        />
+        <Placeholder w="100%" h="100%" radius={0} dark label="封面 · 春日小院" />
 
         {/* 水印 ——— V0 红线 */}
         <WatermarkLayer text={`${watermarkPhone} · ${tenant.name}`} />
@@ -108,7 +95,7 @@ export default async function StudentPlayer({
             inset: 0,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
           <div
@@ -122,7 +109,7 @@ export default async function StudentPlayer({
               alignItems: "center",
               justifyContent: "center",
               border: "1px solid rgba(255,255,255,0.25)",
-              color: "#fff"
+              color: "#fff",
             }}
           >
             <I.play size={22} style={{ marginLeft: 3 }} />
@@ -138,7 +125,7 @@ export default async function StudentPlayer({
             bottom: 0,
             padding: "20px 14px 12px",
             background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.7))",
-            color: "#fff"
+            color: "#fff",
           }}
         >
           <div
@@ -148,7 +135,7 @@ export default async function StudentPlayer({
               gap: 8,
               marginBottom: 8,
               fontSize: 10.5,
-              fontFamily: "var(--mono)"
+              fontFamily: "var(--mono)",
             }}
           >
             <span>07:08</span>
@@ -157,7 +144,7 @@ export default async function StudentPlayer({
                 flex: 1,
                 height: 3,
                 background: "rgba(255,255,255,0.2)",
-                borderRadius: 999
+                borderRadius: 999,
               }}
             >
               <div
@@ -166,7 +153,7 @@ export default async function StudentPlayer({
                   height: "100%",
                   background: "#fff",
                   borderRadius: 999,
-                  position: "relative"
+                  position: "relative",
                 }}
               >
                 <div
@@ -177,12 +164,12 @@ export default async function StudentPlayer({
                     width: 9,
                     height: 9,
                     background: "#fff",
-                    borderRadius: 999
+                    borderRadius: 999,
                   }}
                 />
               </div>
             </div>
-            <span style={{ opacity: 0.6 }}>11:02</span>
+            <span style={{ opacity: 0.6 }}>{lesson.d}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <I.pause size={18} />
@@ -194,7 +181,7 @@ export default async function StudentPlayer({
                 padding: "2px 8px",
                 border: "1px solid rgba(255,255,255,0.25)",
                 borderRadius: 4,
-                fontFamily: "var(--mono)"
+                fontFamily: "var(--mono)",
               }}
             >
               1.0×
@@ -204,7 +191,7 @@ export default async function StudentPlayer({
               style={{
                 fontSize: 10.5,
                 opacity: 0.75,
-                fontFamily: "var(--mono)"
+                fontFamily: "var(--mono)",
               }}
             >
               1080p
@@ -228,7 +215,7 @@ export default async function StudentPlayer({
             letterSpacing: "0.05em",
             display: "flex",
             alignItems: "center",
-            gap: 5
+            gap: 5,
           }}
         >
           <I.clock size={11} /> 6h playAuth
@@ -245,7 +232,7 @@ export default async function StudentPlayer({
           borderTopRightRadius: 16,
           marginTop: -12,
           position: "relative",
-          zIndex: 2
+          zIndex: 2,
         }}
       >
         <div
@@ -253,41 +240,38 @@ export default async function StudentPlayer({
             display: "flex",
             alignItems: "center",
             gap: 8,
-            marginBottom: 12
+            marginBottom: 12,
           }}
         >
           <span className="tz-chip is-accent" style={{ fontSize: 10 }}>
-            第{lesson.n}日 · {String(idx + 1).padStart(2, "0")} /{" "}
-            {String(studentLessons.length).padStart(2, "0")}
+            第{lesson.n}日
           </span>
-          <span
-            style={{
-              fontSize: 10.5,
-              color: "var(--ink-3)",
-              fontFamily: "var(--mono)"
-            }}
-          >
-            5/16 · 已看 {lesson.progress ?? 0}%
-          </span>
+          {lesson.progress != null && (
+            <span
+              style={{
+                fontSize: 10.5,
+                color: "var(--ink-3)",
+                fontFamily: "var(--mono)",
+              }}
+            >
+              已看 {lesson.progress}%
+            </span>
+          )}
         </div>
 
-        <h2
-          className="tz-serif"
-          style={{ margin: "0 0 6px", fontSize: 19, fontWeight: 500 }}
-        >
-          见物 · 把一件物写到能闻见
+        <h2 className="tz-serif" style={{ margin: "0 0 6px", fontSize: 19, fontWeight: 500 }}>
+          {lesson.t}
         </h2>
         <p
           style={{
             margin: "0 0 16px",
             fontSize: 12.5,
             color: "var(--ink-2)",
-            lineHeight: 1.7
+            lineHeight: 1.7,
           }}
         >
           今日的练习是：选一件你今早遇到的、并不起眼的物件——一杯水、一把椅子、窗边一束光——
-          用 300 字把它写到能闻见、能摸到、能听到声音。
-          <i>不评价，只描述。</i>
+          用 300 字把它写到能闻见、能摸到、能听到声音。<i>不评价，只描述。</i>
         </p>
 
         <div
@@ -300,7 +284,7 @@ export default async function StudentPlayer({
             color: "var(--ink-3)",
             display: "flex",
             alignItems: "flex-start",
-            gap: 8
+            gap: 8,
           }}
         >
           <I.info size={12} style={{ marginTop: 1, flex: "0 0 auto" }} />
@@ -316,7 +300,7 @@ export default async function StudentPlayer({
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: 10,
-            marginTop: 18
+            marginTop: 18,
           }}
         >
           <PrevNextButton type="prev" item={prev} slug={slug} />
@@ -330,14 +314,14 @@ export default async function StudentPlayer({
 function PrevNextButton({
   type,
   item,
-  slug
+  slug,
 }: {
   type: "prev" | "next";
-  item: (typeof studentLessons)[number] | null;
+  item: { id: string; t: string; status: string } | null;
   slug: string;
 }) {
   const isNext = type === "next";
-  const disabled = !item || item.status === "locked";
+  const disabled = !item || item.status === "locked" || item.status === "draft" || item.status === "failed";
   const baseStyle: React.CSSProperties = {
     padding: 12,
     border: isNext ? "0" : "1px solid var(--paper-edge)",
@@ -350,20 +334,14 @@ function PrevNextButton({
     textAlign: isNext ? "right" : "left",
     opacity: disabled ? 0.4 : 1,
     cursor: disabled ? "not-allowed" : "pointer",
-    textDecoration: "none"
+    textDecoration: "none",
   };
 
   const inner = (
     <>
       {!isNext && <I.chevL size={14} style={{ color: "var(--ink-3)" }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 10,
-            color: "var(--ink-3)",
-            opacity: isNext ? 0.6 : 1
-          }}
-        >
+        <div style={{ fontSize: 10, color: "var(--ink-3)", opacity: isNext ? 0.6 : 1 }}>
           {isNext ? "下一课时" : "上一课时"}
         </div>
         <div
@@ -372,7 +350,7 @@ function PrevNextButton({
             fontWeight: 500,
             overflow: "hidden",
             textOverflow: "ellipsis",
-            whiteSpace: "nowrap"
+            whiteSpace: "nowrap",
           }}
         >
           {item?.t || "—"}

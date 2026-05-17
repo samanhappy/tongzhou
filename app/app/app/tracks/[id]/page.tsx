@@ -1,12 +1,13 @@
 // 创作者后台 · 课程编辑（V0：课时拖拽 + 上传/转码模拟）
 //
-// 数据来自 lib/mock.ts，但因为有交互（拖拽 + 上传模拟）整页是客户端组件。
+// 数据走 lib/source.ts（API_BASE 时读真后端）；交互部分(拖拽/上传模拟)在 client.tsx。
 
 import { notFound } from "next/navigation";
 import { CreatorShell } from "@/components/shell";
 import { I } from "@/components/icons";
 import { Placeholder, SectionLabel } from "@/components/primitives";
-import { getTrack } from "@/lib/mock";
+import { SourceChip } from "@/components/source-chip";
+import { getTrack } from "@/lib/source";
 import { CourseEditClient } from "./client";
 
 export default async function TrackEditPage({
@@ -15,7 +16,7 @@ export default async function TrackEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const track = getTrack(id);
+  const track = await getTrack(id);
   if (!track) notFound();
 
   return (
@@ -33,6 +34,10 @@ export default async function TrackEditPage({
         </>
       }
     >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 8 }}>
+        <SourceChip source={track.source} />
+      </div>
+
       {/* 子导航 */}
       <div
         style={{
@@ -40,7 +45,6 @@ export default async function TrackEditPage({
           gap: 4,
           borderBottom: "1px solid var(--paper-line)",
           marginBottom: 22,
-          marginTop: -10,
         }}
       >
         {[

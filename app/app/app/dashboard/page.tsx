@@ -1,12 +1,13 @@
 // 创作者后台 · 数据看板
 // 来自 design/creator-dashboard.jsx + PRD §4.6 + V0 §3.1
 //
-// 服务端组件：纯静态展示数据来自 lib/mock.ts。
+// 数据走 lib/source.ts：API_BASE 设置时读真后端，否则 mock。
 
 import { CreatorShell } from "@/components/shell";
 import { I } from "@/components/icons";
 import { Bar, Placeholder, SectionLabel, Sparkline } from "@/components/primitives";
-import { courseWatchRows, dashboardStats, recentActivities } from "@/lib/mock";
+import { SourceChip } from "@/components/source-chip";
+import { getDashboardData } from "@/lib/source";
 
 function StatCard({
   label,
@@ -42,12 +43,7 @@ function StatCard({
       <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 8, marginBottom: 4 }}>
         <span
           className="tz-serif"
-          style={{
-            fontSize: 28,
-            fontWeight: 500,
-            fontVariantNumeric: "tabular-nums",
-            lineHeight: 1,
-          }}
+          style={{ fontSize: 28, fontWeight: 500, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}
         >
           {value}
         </span>
@@ -76,17 +72,10 @@ function QuotaRow({
   unit: string;
   color?: string;
 }) {
-  const pct = Math.round((value / max) * 100);
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          marginBottom: 6,
-        }}
-      >
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{label}</span>
         <span
           style={{
@@ -103,10 +92,12 @@ function QuotaRow({
   );
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { stats, quotas, courseWatch, activities, source } = await getDashboardData();
+
   return (
     <CreatorShell
-      title="今日 · 五月十六"
+      title="今日 · 五月十七"
       breadcrumb={["醒春阁", "工作台"]}
       actions={
         <button className="tz-btn">
@@ -114,6 +105,10 @@ export default function DashboardPage() {
         </button>
       }
     >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: -10, marginBottom: 14 }}>
+        <SourceChip source={source} />
+      </div>
+
       {/* 顶部 4 维度统计 */}
       <div
         style={{
@@ -123,7 +118,7 @@ export default function DashboardPage() {
           marginBottom: 22,
         }}
       >
-        {dashboardStats.map((s) => (
+        {stats.map((s) => (
           <StatCard key={s.label} {...s} />
         ))}
       </div>
@@ -143,90 +138,75 @@ export default function DashboardPage() {
               </div>
             }
           />
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
-            <thead>
-              <tr
-                style={{
-                  color: "var(--ink-3)",
-                  fontSize: 11,
-                  fontWeight: 400,
-                  textAlign: "left",
-                }}
-              >
-                <th style={{ padding: "8px 0", fontWeight: 400, letterSpacing: "0.05em" }}>课时</th>
-                <th
-                  style={{ padding: "8px 0", fontWeight: 400, width: 80, textAlign: "right" }}
-                >
-                  观看人数
-                </th>
-                <th
-                  style={{ padding: "8px 0", fontWeight: 400, width: 100, textAlign: "right" }}
-                >
-                  播放分钟
-                </th>
-                <th style={{ padding: "8px 0", fontWeight: 400, width: 140 }}>完播率</th>
-              </tr>
-            </thead>
-            <tbody>
-              {courseWatchRows.map((r, i) => (
-                <tr key={i} style={{ borderTop: "1px solid var(--paper-line)" }}>
-                  <td style={{ padding: "11px 0" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <Placeholder w={36} h={22} radius={3} label="" />
-                      {r.name}
-                    </div>
-                  </td>
-                  <td
-                    style={{
-                      padding: "11px 0",
-                      textAlign: "right",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {r.view}
-                  </td>
-                  <td
-                    style={{
-                      padding: "11px 0",
-                      textAlign: "right",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {r.mins}
-                  </td>
-                  <td style={{ padding: "11px 0" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ flex: 1 }}>
-                        <Bar value={r.complete} />
-                      </div>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: "var(--ink-2)",
-                          fontVariantNumeric: "tabular-nums",
-                          width: 28,
-                          textAlign: "right",
-                        }}
-                      >
-                        {r.complete}%
-                      </span>
-                    </div>
-                  </td>
+          {courseWatch.length === 0 ? (
+            <div
+              style={{
+                padding: 28,
+                textAlign: "center",
+                color: "var(--ink-3)",
+                fontSize: 12,
+              }}
+            >
+              暂无观看记录 — 学员通过 H5 链接打开后会在此显示
+            </div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ color: "var(--ink-3)", fontSize: 11, fontWeight: 400, textAlign: "left" }}>
+                  <th style={{ padding: "8px 0", fontWeight: 400, letterSpacing: "0.05em" }}>课时</th>
+                  <th style={{ padding: "8px 0", fontWeight: 400, width: 80, textAlign: "right" }}>观看人数</th>
+                  <th style={{ padding: "8px 0", fontWeight: 400, width: 100, textAlign: "right" }}>播放分钟</th>
+                  <th style={{ padding: "8px 0", fontWeight: 400, width: 140 }}>完播率</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {courseWatch.map((r, i) => (
+                  <tr key={i} style={{ borderTop: "1px solid var(--paper-line)" }}>
+                    <td style={{ padding: "11px 0" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <Placeholder w={36} h={22} radius={3} label="" />
+                        {r.name}
+                      </div>
+                    </td>
+                    <td style={{ padding: "11px 0", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                      {r.view}
+                    </td>
+                    <td style={{ padding: "11px 0", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                      {r.mins}
+                    </td>
+                    <td style={{ padding: "11px 0" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ flex: 1 }}>
+                          <Bar value={r.complete} />
+                        </div>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: "var(--ink-2)",
+                            fontVariantNumeric: "tabular-nums",
+                            width: 28,
+                            textAlign: "right",
+                          }}
+                        >
+                          {r.complete}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* 右：Quota + 最近活动 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="tz-card" style={{ padding: 18 }}>
-            <SectionLabel stamp="量" title="本月 Freemium" sub="距升级还有 18%" />
+            <SectionLabel stamp="量" title="本月 Freemium" sub="实时" />
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <QuotaRow label="月活学员" value={142} max={200} unit="人" color="var(--accent)" />
-              <QuotaRow label="发布课程" value={6} max={10} unit="门" color="var(--accent)" />
-              <QuotaRow label="视频存储" value={3.8} max={5} unit="GB" color="var(--warn)" />
-              <QuotaRow label="播放分钟" value={1284} max={1500} unit="分钟" color="var(--warn)" />
+              {quotas.map((q) => (
+                <QuotaRow key={q.label} {...q} />
+              ))}
             </div>
             <div
               style={{
@@ -242,51 +222,62 @@ export default function DashboardPage() {
               }}
             >
               <I.info size={13} style={{ marginTop: 1, flex: "0 0 auto" }} />
-              <span>
-                <b>播放分钟</b>已用 86%。任何超额仅冻结上传，学员观看不受影响。
-              </span>
+              <span>任何超额仅冻结上传，学员观看不受影响。</span>
             </div>
           </div>
 
           <div className="tz-card" style={{ padding: 18 }}>
             <SectionLabel stamp="动" title="最近活动" />
-            {recentActivities.map((r, i) => (
+            {activities.length === 0 ? (
               <div
-                key={i}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "8px 0",
-                  borderTop: i ? "1px solid var(--paper-line)" : "none",
+                  padding: 20,
+                  textAlign: "center",
+                  color: "var(--ink-3)",
+                  fontSize: 11.5,
                 }}
               >
+                暂无活动事件 — 等接入 activity events 后填充
+              </div>
+            ) : (
+              activities.map((r, i) => (
                 <div
+                  key={i}
                   style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 999,
-                    background: "var(--paper-deep)",
-                    color: "var(--ink-2)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "var(--serif)",
-                    fontSize: 11.5,
-                    flex: "0 0 auto",
+                    gap: 10,
+                    padding: "8px 0",
+                    borderTop: i ? "1px solid var(--paper-line)" : "none",
                   }}
                 >
-                  {r.who[0]}
-                </div>
-                <div style={{ flex: 1, fontSize: 12 }}>
-                  <div>
-                    <b style={{ fontWeight: 500 }}>{r.who}</b>{" "}
-                    · <span style={{ color: "var(--ink-2)" }}>{r.what}</span>
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 999,
+                      background: "var(--paper-deep)",
+                      color: "var(--ink-2)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "var(--serif)",
+                      fontSize: 11.5,
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    {r.who[0]}
                   </div>
+                  <div style={{ flex: 1, fontSize: 12 }}>
+                    <div>
+                      <b style={{ fontWeight: 500 }}>{r.who}</b>{" "}
+                      · <span style={{ color: "var(--ink-2)" }}>{r.what}</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 10.5, color: "var(--ink-3)" }}>{r.t}</span>
                 </div>
-                <span style={{ fontSize: 10.5, color: "var(--ink-3)" }}>{r.t}</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
