@@ -1,12 +1,15 @@
 # 同舟 · 基础设施
 #
 # 本地开发：
-#   docker compose up -d postgres   # 只起数据库
+#   docker compose up -d postgres            # 只起数据库
+#   docker compose up -d --build             # 本地构建并启动所有服务
 #
-# 生产（服务器上）：
-#   docker compose up -d --build    # 构建并启动所有服务
-#   docker compose down -v          # 干净停掉（连数据卷一起删）
+# 生产（服务器上）：镜像由 GitHub Actions 构建并推送到 TCR
+#   docker compose pull                      # 拉取最新镜像
+#   docker compose up -d                     # 启动 / 滚动更新
+#   docker compose down -v                   # 干净停掉（连数据卷一起删）
 #
+# IMAGE_TAG 默认为 latest；也可指定具体 sha：IMAGE_TAG=<sha> docker compose pull
 # 生产环境需要在 api/.env 中配置正式参数（参考 api/.env.example）。
 
 services:
@@ -29,6 +32,7 @@ services:
     restart: unless-stopped
 
   api:
+    image: ccr.ccs.tencentyun.com/tongzhou/api:${IMAGE_TAG:-latest}
     build:
       context: ./api
     container_name: tongzhou-api
@@ -45,6 +49,7 @@ services:
     restart: unless-stopped
 
   app:
+    image: ccr.ccs.tencentyun.com/tongzhou/app:${IMAGE_TAG:-latest}
     build:
       context: ./app
     container_name: tongzhou-app
