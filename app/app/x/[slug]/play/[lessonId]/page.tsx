@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { I } from "@/components/icons";
-import { Placeholder, WatermarkLayer } from "@/components/primitives";
+import { H5VideoPlayer } from "@/components/h5-video-player";
 import { SourceChip } from "@/components/source-chip";
 import { getStudentLesson } from "@/lib/source";
 
@@ -20,7 +20,7 @@ export default async function StudentPlayer({
   const data = await getStudentLesson(slug, lessonId);
   if (!data) notFound();
 
-  const { tenant, lesson, prev, next, watermarkPhone, source } = data;
+  const { tenant, lesson, prev, next, watermarkPhone, play, source } = data;
 
   return (
     <div style={{ minHeight: "100%", background: "#0e0e0c", color: "#f0eee9" }}>
@@ -83,158 +83,14 @@ export default async function StudentPlayer({
       </div>
 
       {/* 视频区 */}
-      <div
-        style={{
-          position: "relative",
-          aspectRatio: "16 / 10",
-          overflow: "hidden",
-          background: "#000",
-        }}
-      >
-        <Placeholder
-          w="100%"
-          h="100%"
-          radius={0}
-          dark
-          label="封面 · 春日小院"
-        />
-
-        {/* 水印 ——— V0 红线 */}
-        <WatermarkLayer text={`${watermarkPhone} · ${tenant.name}`} />
-
-        {/* 中央播放按钮 */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 999,
-              background: "rgba(255,255,255,0.18)",
-              backdropFilter: "blur(12px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px solid rgba(255,255,255,0.25)",
-              color: "#fff",
-            }}
-          >
-            <I.play size={22} style={{ marginLeft: 3 }} />
-          </div>
-        </div>
-
-        {/* 控件 */}
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            padding: "20px 14px 12px",
-            background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.7))",
-            color: "#fff",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 8,
-              fontSize: 10.5,
-              fontFamily: "var(--mono)",
-            }}
-          >
-            <span>07:08</span>
-            <div
-              style={{
-                flex: 1,
-                height: 3,
-                background: "rgba(255,255,255,0.2)",
-                borderRadius: 999,
-              }}
-            >
-              <div
-                style={{
-                  width: "64%",
-                  height: "100%",
-                  background: "#fff",
-                  borderRadius: 999,
-                  position: "relative",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    right: -5,
-                    top: -3,
-                    width: 9,
-                    height: 9,
-                    background: "#fff",
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
-            </div>
-            <span style={{ opacity: 0.6 }}>{lesson.d}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <I.pause size={18} />
-            <I.vol size={16} style={{ opacity: 0.8 }} />
-            <div
-              style={{
-                fontSize: 11,
-                opacity: 0.7,
-                padding: "2px 8px",
-                border: "1px solid rgba(255,255,255,0.25)",
-                borderRadius: 4,
-                fontFamily: "var(--mono)",
-              }}
-            >
-              1.0×
-            </div>
-            <div style={{ flex: 1 }} />
-            <div
-              style={{
-                fontSize: 10.5,
-                opacity: 0.75,
-                fontFamily: "var(--mono)",
-              }}
-            >
-              1080p
-            </div>
-            <I.fullscr size={16} style={{ opacity: 0.8 }} />
-          </div>
-        </div>
-
-        {/* 防盗链 */}
-        <div
-          style={{
-            position: "absolute",
-            top: 14,
-            right: 12,
-            background: "rgba(0,0,0,0.6)",
-            color: "rgba(255,255,255,0.8)",
-            padding: "4px 8px",
-            borderRadius: 4,
-            fontSize: 10,
-            fontFamily: "var(--mono)",
-            letterSpacing: "0.05em",
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-          }}
-        >
-          <I.clock size={11} /> 6h playAuth
-        </div>
-      </div>
+      <H5VideoPlayer
+        key={play?.url ?? lesson.id}
+        src={play?.url ?? null}
+        mime={play?.mime}
+        watermarkText={`${watermarkPhone} · ${tenant.name}`}
+        posterLabel={`封面 · ${lesson.t}`}
+        fallbackDurationText={lesson.d}
+      />
 
       {/* 下方内容 */}
       <div

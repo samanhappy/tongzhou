@@ -124,5 +124,24 @@ export function createTencentCosStorage(cos: CosConfig): Storage {
     publicUrl(key) {
       return publicUrlFor(key);
     },
+
+    async signedReadUrl(key, expiresSec = 6 * 3600): Promise<string> {
+      // 私有桶下,学员端需要带签名才能 GET 到媒资。
+      // 这里走 COS 直签 URL；后续切 CDN URL 鉴权时,改成走 CDN domain + 签名拼接。
+      return new Promise<string>((resolve, reject) => {
+        const ret = client.getObjectUrl(
+          {
+            Bucket: bucket,
+            Region: region,
+            Key: key,
+            Method: "GET",
+            Sign: true,
+            Expires: expiresSec,
+          },
+          (err, data) => (err ? reject(err) : resolve(data.Url)),
+        );
+        if (typeof ret === "string" && ret.length) resolve(ret);
+      });
+    },
   };
 }

@@ -55,5 +55,9 @@ export function createLocalStorage(opts: {
     publicUrl(key) {
       return `${opts.publicBase}/${key}`;
     },
+
+    async signedReadUrl(key) {
+      return `${opts.publicBase}/${key}`;
+    },
   };
 }

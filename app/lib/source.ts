@@ -12,6 +12,7 @@ import {
   fetchMeters,
   fetchPublicLanding,
   fetchPublicLesson,
+  fetchPublicLessonPlay,
   fetchTenant,
   fetchTrack,
   fetchTracks,
@@ -670,6 +671,12 @@ export type StudentLessonData = {
   prev: { id: string; t: string; status: string } | null;
   next: { id: string; t: string; status: string } | null;
   watermarkPhone: string;
+  play: {
+    url: string;
+    mime: string;
+    durationSec: number | null;
+    expiresAt: number;
+  } | null;
   source: Source;
 };
 
@@ -679,9 +686,10 @@ export async function getStudentLesson(
 ): Promise<StudentLessonData | null> {
   if (apiEnabled()) {
     try {
-      const [{ tenant }, { lessons }] = await Promise.all([
+      const [{ tenant }, { lessons }, play] = await Promise.all([
         fetchPublicLesson(slug, lessonId),
         fetchPublicLanding(slug),
+        fetchPublicLessonPlay(slug, lessonId),
       ]);
       const idx = lessons.findIndex((l) => l.id === lessonId);
       if (idx < 0) return null;
@@ -706,6 +714,14 @@ export async function getStudentLesson(
           : null,
         // V0.5 起接公众号 OAuth2 后才有真实手机号,这里给占位
         watermarkPhone: "138****0000",
+        play: play
+          ? {
+              url: play.playUrl,
+              mime: play.mime,
+              durationSec: play.durationSec,
+              expiresAt: play.expiresAt,
+            }
+          : null,
         source: "api",
       };
     } catch {
@@ -732,6 +748,7 @@ export async function getStudentLesson(
     prev: prev ? { id: prev.id, t: prev.t, status: prev.status } : null,
     next: next ? { id: next.id, t: next.t, status: next.status } : null,
     watermarkPhone: mockWatermark,
+    play: null,
     source: "mock",
   };
 }

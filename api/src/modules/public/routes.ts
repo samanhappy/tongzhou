@@ -11,6 +11,8 @@ import { newId } from "../../lib/id.js";
 import { getBySlug } from "../tenants/repo.js";
 import * as tracksRepo from "../tracks/repo.js";
 import * as lessonsRepo from "../lessons/repo.js";
+import * as uploadsRepo from "../uploads/repo.js";
+import { getStorage } from "../../storage/index.js";
 
 export async function registerPublicRoutes(app: FastifyInstance) {
   app.get<{ Params: { slug: string } }>("/api/x/:slug", async (req, reply) => {
@@ -33,6 +35,42 @@ export async function registerPublicRoutes(app: FastifyInstance) {
       const lesson = await lessonsRepo.getById(t.id, req.params.lessonId);
       if (!lesson) return reply.code(404).send({ error: "lesson not found" });
       return { tenant: t, lesson };
+    },
+  );
+
+  // 学员端播放地址 · MVP 直接返回 uploads.url(local / COS 公开 URL)
+  // V0.5 切到 tencent-vod 后,这里改成 video.getPlayInfo() 返回 playAuth-signed URL
+  app.get<{ Params: { slug: string; lessonId: string } }>(
+    "/api/x/:slug/lessons/:lessonId/play",
+    async (req, reply) => {
+      const t = await getBySlug(req.params.slug);
+      if (!t) return reply.code(404).send({ error: "tenant not found" });
+      const lesson = await lessonsRepo.getById(t.id, req.params.lessonId);
+      if (!lesson) return reply.code(404).send({ error: "lesson not found" });
+      if (!lesson.video_id) {
+        return reply.code(404).send({ error: "lesson has no video" });
+      }
+      const upload = await uploadsRepo.getById(t.id, lesson.video_id);
+      if (!upload) {
+        return reply.code(404).send({ error: "upload not found" });
+      }
+      if (upload.phase !== "ready") {
+        return reply
+          .code(409)
+          .send({ error: `upload not ready: ${upload.phase}` });
+      }
+      const expiresSec = 6 * 3600;
+      // 私有桶 / CDN 鉴权下需要签名 URL；local 适配器直接返回 publicUrl
+      const playUrl = await getStorage().signedReadUrl(
+        upload.storage_key,
+        expiresSec,
+      );
+      return {
+        playUrl,
+        mime: upload.mime,
+        durationSec: upload.duration_sec ?? lesson.duration_sec,
+        expiresAt: Date.now() + expiresSec * 1000,
+      };
     },
   );
 

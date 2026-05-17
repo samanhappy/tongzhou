@@ -210,3 +210,25 @@ export async function fetchPublicLesson(
 ): Promise<{ tenant: ApiTenant; lesson: ApiLesson }> {
   return call(`/api/x/${slug}/lessons/${lessonId}`, { tenantHeader: false });
 }
+
+export type ApiLessonPlay = {
+  playUrl: string;
+  mime: string;
+  durationSec: number | null;
+  expiresAt: number;
+};
+
+export async function fetchPublicLessonPlay(
+  slug: string,
+  lessonId: string,
+): Promise<ApiLessonPlay | null> {
+  if (!BASE) return null;
+  try {
+    return await call<ApiLessonPlay>(
+      `/api/x/${slug}/lessons/${lessonId}/play`,
+      { tenantHeader: false },
+    );
+  } catch {
+    return null;
+  }
+}

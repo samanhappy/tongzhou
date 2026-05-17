@@ -52,6 +52,13 @@ export interface Storage {
 
   /** 根据 key 拼出对外访问 url（CDN 域名 / 本地路径） */
   publicUrl(key: string): string;
+
+  /**
+   * 颁发限时只读 URL（私有桶 / playAuth 红线）
+   * - local：无签名概念,直接返回 publicUrl(key)
+   * - tencent-cos：用 COS getObjectUrl(Sign:true, Method:GET) 出 6h 链接
+   */
+  signedReadUrl(key: string, expiresSec?: number): Promise<string>;
 }
 
 let _storage: Storage | null = null;
