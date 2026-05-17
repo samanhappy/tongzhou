@@ -34,6 +34,7 @@ export async function registerTrackRoutes(app: FastifyInstance) {
   app.patch<{
     Params: { id: string };
     Body: Partial<{
+      slug: string;
       title: string;
       subtitle: string;
       oneLine: string;
@@ -41,13 +42,22 @@ export async function registerTrackRoutes(app: FastifyInstance) {
     }>;
   }>("/api/tracks/:id", async (req) => {
     const t = requireTenant(req);
+    const existing = await repo.getById(t.id, req.params.id);
+    if (!existing) throw new HttpError(404, "track not found");
+    const nextSlug = req.body?.slug?.trim();
+    if (nextSlug && nextSlug !== existing.slug) {
+      const slugConflict = await repo.getBySlug(t.id, nextSlug);
+      if (slugConflict && slugConflict.id !== existing.id) {
+        throw new HttpError(409, "slug exists");
+      }
+    }
     const track = await repo.update(t.id, req.params.id, {
+      slug: nextSlug,
       title: req.body?.title,
       subtitle: req.body?.subtitle,
       one_line: req.body?.oneLine,
       status: req.body?.status,
     });
-    if (!track) throw new HttpError(404, "track not found");
     return { track };
   });
 }

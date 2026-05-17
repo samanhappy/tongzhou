@@ -22,10 +22,24 @@ export async function registerTenantRoutes(app: FastifyInstance) {
   });
 
   app.patch<{
-    Body: { name?: string; tagline?: string; themeHue?: number; groupLink?: string };
+    Body: {
+      slug?: string;
+      name?: string;
+      tagline?: string;
+      themeHue?: number;
+      groupLink?: string;
+    };
   }>("/api/tenants/me", async (req) => {
     if (!req.tenant) throw new HttpError(401, "no tenant context");
+    const nextSlug = req.body?.slug?.trim();
+    if (nextSlug && nextSlug !== req.tenant.slug) {
+      const existing = await repo.getBySlug(nextSlug);
+      if (existing && existing.id !== req.tenant.id) {
+        throw new HttpError(409, "slug already taken");
+      }
+    }
     const t = await repo.update(req.tenant.id, {
+      slug: nextSlug,
       name: req.body?.name,
       tagline: req.body?.tagline,
       theme_hue: req.body?.themeHue,

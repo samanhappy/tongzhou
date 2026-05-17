@@ -5,10 +5,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { I } from "@/components/icons";
 import { Bar, TZMark, XCMark } from "@/components/primitives";
 import { registerAuth } from "@/lib/auth-client";
+import {
+  createLesson,
+  createTrack,
+  fileNameToTitle,
+  suggestSlug,
+  updateTenant,
+  updateTrack,
+  uploadFile,
+} from "@/lib/creator-client";
 import { tenant } from "@/lib/mock";
 
 const STEPS = [
@@ -26,6 +35,32 @@ type Step1Form = {
   slug: string;
 };
 
+type Step2Form = {
+  slug: string;
+  themeHue: number;
+};
+
+type UploadedVideo = {
+  id: string;
+  name: string;
+  sizeText: string;
+  phase: "uploading" | "transcoding" | "ready" | "failed";
+};
+
+type Step4Form = {
+  title: string;
+  oneLine: string;
+  slug: string;
+};
+
+const STEP2_THEMES = [
+  ["#1a4d4a", 162],
+  ["#7a2e1f", 28],
+  ["#1e3a8a", 268],
+  ["#0c0c0c", 60],
+  ["#c2410c", 38],
+] as const;
+
 export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -40,31 +75,165 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
     name: tenant.name,
     slug: tenant.slug,
   });
+  const [brandForm, setBrandForm] = useState<Step2Form>({
+    slug: tenant.slug,
+    themeHue: tenant.themeHue,
+  });
+  const [uploads, setUploads] = useState<UploadedVideo[]>([]);
+  const [trackForm, setTrackForm] = useState<Step4Form>({
+    title: "七天成长计划",
+    oneLine: "七个清晨，从见我到见今。",
+    slug: "qitian-chengzhang",
+  });
+  const [createdTrack, setCreatedTrack] = useState<{ id: string; slug: string } | null>(null);
 
   async function handleNext() {
-    if (step !== 1) {
-      setStep((current) => Math.min(STEPS.length, current + 1));
-      return;
-    }
-
     setError(null);
-    setTenantDraft({ name: form.name || tenant.name, slug: form.slug || tenant.slug });
+    if (step === 1) {
+      setTenantDraft({ name: form.name || tenant.name, slug: form.slug || tenant.slug });
 
-    if (!apiBase) {
-      setStep(2);
+      if (!apiBase) {
+        setBrandForm((current) => ({ ...current, slug: form.slug || tenant.slug }));
+        setStep(2);
+        return;
+      }
+
+      setBusy(true);
+      try {
+        const session = await registerAuth(apiBase, form);
+        setTenantDraft({
+          name: session.tenant.name,
+          slug: session.tenant.slug,
+        });
+        setBrandForm({
+          slug: session.tenant.slug,
+          themeHue: tenant.themeHue,
+        });
+        setStep(2);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "注册失败，请稍后再试");
+      } finally {
+        setBusy(false);
+      }
       return;
     }
+
+    if (step === 2) {
+      setBusy(true);
+      try {
+        const nextSlug = suggestSlug(brandForm.slug) || tenantDraft.slug;
+        if (apiBase) {
+          await updateTenant(apiBase, {
+            slug: nextSlug,
+            themeHue: brandForm.themeHue,
+          });
+        }
+        setTenantDraft((current) => ({ ...current, slug: nextSlug }));
+        setStep(3);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "保存品牌失败，请稍后再试");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    if (step === 3) {
+      setStep(4);
+      return;
+    }
+
+    if (step === 4) {
+      setBusy(true);
+      try {
+        const nextSlug = suggestSlug(trackForm.slug || trackForm.title) || "first-course";
+        if (!apiBase) {
+          setCreatedTrack({ id: "mock-first-track", slug: nextSlug });
+          setStep(5);
+          return;
+        }
+
+        const currentTrack = createdTrack
+          ? {
+              track: {
+                id: createdTrack.id,
+                slug: createdTrack.slug,
+              },
+            }
+          : await createTrack(apiBase, {
+              slug: nextSlug,
+              title: trackForm.title.trim(),
+              oneLine: trackForm.oneLine.trim(),
+              subtitle: "习作启蒙",
+            });
+
+        if (!createdTrack) {
+          for (const upload of uploads.filter((item) => item.phase === "ready")) {
+            await createLesson(apiBase, currentTrack.track.id, {
+              title: fileNameToTitle(upload.name),
+              summary: `上传自 ${upload.name}`,
+              videoId: upload.id,
+              status: "draft",
+            });
+          }
+        }
+
+        await updateTrack(apiBase, currentTrack.track.id, {
+          slug: nextSlug,
+          title: trackForm.title.trim(),
+          oneLine: trackForm.oneLine.trim(),
+          status: "published",
+        });
+        setCreatedTrack({ id: currentTrack.track.id, slug: nextSlug });
+        setStep(5);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "创建课程失败，请稍后再试");
+      } finally {
+        setBusy(false);
+      }
+    }
+  }
+
+  async function handleFiles(files: FileList | null) {
+    if (!files?.length) return;
 
     setBusy(true);
+    setError(null);
     try {
-      const session = await registerAuth(apiBase, form);
-      setTenantDraft({
-        name: session.tenant.name,
-        slug: session.tenant.slug,
-      });
-      setStep(2);
+      for (const file of Array.from(files)) {
+        const pendingId = `pending-${file.name}-${Date.now()}`;
+        setUploads((current) => [
+          {
+            id: pendingId,
+            name: file.name,
+            sizeText: `${Math.round(file.size / 1024 / 1024) || 1} MB`,
+            phase: "uploading",
+          },
+          ...current,
+        ]);
+
+        if (!apiBase) {
+          setUploads((current) =>
+            current.map((item) =>
+              item.id === pendingId ? { ...item, phase: "ready" } : item,
+            ),
+          );
+          continue;
+        }
+
+        const { upload } = await uploadFile(apiBase, file);
+        setUploads((current) => [
+          {
+            id: upload.id,
+            name: upload.filename,
+            sizeText: `${Math.round(upload.size_bytes / 1024 / 1024) || 1} MB`,
+            phase: upload.phase,
+          },
+          ...current.filter((item) => item.id !== pendingId),
+        ]);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "注册失败，请稍后再试");
+      setError(err instanceof Error ? err.message : "上传失败，请稍后再试");
     } finally {
       setBusy(false);
     }
@@ -107,9 +276,9 @@ export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
 
         <StepCard step={step} total={STEPS.length} title={STEPS[step - 1].title} time={STEPS[step - 1].time}>
           {step === 1 && <Step1 apiBase={apiBase} busy={busy} error={error} form={form} setForm={setForm} />}
-          {step === 2 && <Step2 tenantName={tenantDraft.name} tenantSlug={tenantDraft.slug} />}
-          {step === 3 && <Step3 />}
-          {step === 4 && <Step4 />}
+          {step === 2 && <Step2 tenantName={tenantDraft.name} form={brandForm} setForm={setBrandForm} />}
+          {step === 3 && <Step3 apiBase={apiBase} uploads={uploads} onFilesSelected={handleFiles} busy={busy} />}
+          {step === 4 && <Step4 form={trackForm} setForm={setTrackForm} uploads={uploads} busy={busy} />}
           {step === 5 && <Step5 tenantSlug={tenantDraft.slug} />}
 
           {step < 5 ? (
@@ -413,7 +582,15 @@ function Step1({
   );
 }
 
-function Step2({ tenantName, tenantSlug }: { tenantName: string; tenantSlug: string }) {
+function Step2({
+  tenantName,
+  form,
+  setForm,
+}: {
+  tenantName: string;
+  form: Step2Form;
+  setForm: React.Dispatch<React.SetStateAction<Step2Form>>;
+}) {
   return (
     <>
       <p
@@ -446,24 +623,19 @@ function Step2({ tenantName, tenantSlug }: { tenantName: string; tenantSlug: str
       </div>
       <FieldRow label="主题色">
         <div style={{ display: "flex", gap: 6 }}>
-          {(
-            [
-              ["#1a4d4a", true],
-              ["#7a2e1f", false],
-              ["#1e3a8a", false],
-              ["#0c0c0c", false],
-              ["#c2410c", false],
-            ] as const
-          ).map(([c, on]) => (
-            <div
-              key={c}
+          {STEP2_THEMES.map(([color, hue]) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => setForm((current) => ({ ...current, themeHue: hue }))}
               style={{
                 width: 28,
                 height: 28,
                 borderRadius: 999,
-                background: c,
-                border: on ? "2px solid var(--ink)" : "2px solid transparent",
-                boxShadow: on ? "inset 0 0 0 2px #fff" : "none",
+                background: color,
+                border: form.themeHue === hue ? "2px solid var(--ink)" : "2px solid transparent",
+                boxShadow: form.themeHue === hue ? "inset 0 0 0 2px #fff" : "none",
+                cursor: "pointer",
               }}
             />
           ))}
@@ -473,7 +645,13 @@ function Step2({ tenantName, tenantSlug }: { tenantName: string; tenantSlug: str
         <div style={{ display: "flex" }}>
           <input
             className="tz-input"
-            defaultValue={tenantSlug}
+            value={form.slug}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                slug: suggestSlug(event.target.value),
+              }))
+            }
             style={{
               fontSize: 12,
               borderTopRightRadius: 0,
@@ -507,7 +685,19 @@ function Step2({ tenantName, tenantSlug }: { tenantName: string; tenantSlug: str
   );
 }
 
-function Step3() {
+function Step3({
+  apiBase,
+  uploads,
+  onFilesSelected,
+  busy,
+}: {
+  apiBase: string | null;
+  uploads: UploadedVideo[];
+  onFilesSelected: (files: FileList | null) => Promise<void>;
+  busy: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   return (
     <>
       <p
@@ -520,117 +710,49 @@ function Step3() {
         OSS 直传 · 单文件 ≤ 2 GB · 边播边转
       </p>
 
-      <div
-        style={{
-          background: "#fff",
-          border: "1px solid var(--paper-edge)",
-          borderRadius: 8,
-          padding: "12px 14px",
-          marginBottom: 10,
-        }}
-      >
+      {uploads.length === 0 ? (
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 8,
+            background: "#fff",
+            border: "1px solid var(--paper-edge)",
+            borderRadius: 8,
+            padding: "14px 16px",
+            marginBottom: 10,
+            fontSize: 11.5,
+            color: "var(--ink-3)",
           }}
         >
-          <I.video size={14} style={{ color: "var(--accent)" }} />
-          <span
+          还没有选中视频。先丢一个进来，后面的课程发布就会直接复用它们。
+        </div>
+      ) : (
+        uploads.map((upload) => (
+          <div
+            key={upload.id}
             style={{
-              fontSize: 12,
-              fontWeight: 500,
-              flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              background: "#fff",
+              border: "1px solid var(--paper-edge)",
+              borderRadius: 8,
+              padding: "12px 14px",
+              marginBottom: 10,
             }}
           >
-            第一日·见我.mp4
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: "var(--ink-3)",
-              fontFamily: "var(--mono)",
-            }}
-          >
-            312 MB
-          </span>
-        </div>
-        <Bar value={100} />
-        <div
-          style={{
-            marginTop: 6,
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 10,
-            color: "var(--accent)",
-          }}
-        >
-          <span>✓ 已上传 · 转码中</span>
-          <span style={{ fontFamily: "var(--mono)" }}>
-            1080p 完成 · 720p 进行中
-          </span>
-        </div>
-      </div>
-
-      <div
-        style={{
-          background: "#fff",
-          border: "1px solid var(--paper-edge)",
-          borderRadius: 8,
-          padding: "12px 14px",
-          marginBottom: 10,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 8,
-          }}
-        >
-          <I.video size={14} style={{ color: "var(--ink-3)" }} />
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            第二日·见物.mp4
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: "var(--ink-3)",
-              fontFamily: "var(--mono)",
-            }}
-          >
-            412 MB
-          </span>
-        </div>
-        <Bar value={64} />
-        <div
-          style={{
-            marginTop: 6,
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 10,
-            color: "var(--ink-2)",
-          }}
-        >
-          <span>上传中 · 64%</span>
-          <span style={{ fontFamily: "var(--mono)" }}>2 min 余</span>
-        </div>
-      </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <I.video size={14} style={{ color: upload.phase === "ready" ? "var(--accent)" : "var(--ink-3)" }} />
+              <span style={{ fontSize: 12, fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {upload.name}
+              </span>
+              <span style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "var(--mono)" }}>{upload.sizeText}</span>
+            </div>
+            <Bar value={upload.phase === "ready" ? 100 : upload.phase === "uploading" ? 64 : upload.phase === "transcoding" ? 88 : 100} />
+            <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 10, color: upload.phase === "ready" ? "var(--accent)" : "var(--ink-2)" }}>
+              <span>
+                {upload.phase === "ready" ? "✓ 已上传" : upload.phase === "uploading" ? "上传中" : upload.phase === "transcoding" ? "转码中" : "上传失败"}
+              </span>
+              <span style={{ fontFamily: "var(--mono)" }}>{apiBase ? "后端已记录" : "离线演示"}</span>
+            </div>
+          </div>
+        ))
+      )}
 
       <div
         style={{
@@ -646,40 +768,67 @@ function Step3() {
         <I.upload size={18} style={{ color: "var(--accent)" }} />
         <div style={{ marginTop: 6 }}>把视频文件拖到这里</div>
         <div style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
-          或 <a style={{ color: "var(--accent)" }}>从本地选择</a>
+          或 <button type="button" onClick={() => inputRef.current?.click()} style={{ color: "var(--accent)", background: "transparent", border: 0, padding: 0, cursor: "pointer" }}>从本地选择</button>
         </div>
+        <input ref={inputRef} type="file" accept="video/*" multiple hidden onChange={(event) => void onFilesSelected(event.target.files)} />
       </div>
+      {busy && <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 10 }}>正在上传并登记视频，请稍候…</div>}
     </>
   );
 }
 
-function Step4() {
+function Step4({
+  form,
+  setForm,
+  uploads,
+  busy,
+}: {
+  form: Step4Form;
+  setForm: React.Dispatch<React.SetStateAction<Step4Form>>;
+  uploads: UploadedVideo[];
+  busy: boolean;
+}) {
   return (
     <>
       <FieldRow label="课程名称">
         <input
           className="tz-input"
-          defaultValue="七天成长计划 · 习作启蒙"
+          value={form.title}
+          onChange={(event) =>
+            setForm((current) => ({
+              ...current,
+              title: event.target.value,
+              slug: current.slug || suggestSlug(event.target.value),
+            }))
+          }
           style={{ fontSize: 12 }}
         />
       </FieldRow>
       <FieldRow label="一句话简介">
         <input
           className="tz-input"
-          defaultValue="七个清晨，从见我到见今。"
+          value={form.oneLine}
+          onChange={(event) => setForm((current) => ({ ...current, oneLine: event.target.value }))}
+          style={{ fontSize: 12 }}
+        />
+      </FieldRow>
+      <FieldRow label="课程 slug">
+        <input
+          className="tz-input"
+          value={form.slug}
+          onChange={(event) =>
+            setForm((current) => ({ ...current, slug: suggestSlug(event.target.value) }))
+          }
           style={{ fontSize: 12 }}
         />
       </FieldRow>
 
       <div style={{ marginTop: 14, marginBottom: 8, fontSize: 11, fontWeight: 500 }}>
-        课时（2）
+        课时（{uploads.length}）
       </div>
-      {[
-        { t: "第一日 · 见我", d: "09:12", ok: true },
-        { t: "第二日 · 见物", d: "上传中…", ok: false },
-      ].map((l, i) => (
+      {(uploads.length ? uploads : [{ id: "placeholder", name: "还没有上传视频", sizeText: "—", phase: "failed" as const }]).map((upload, i) => (
         <div
-          key={i}
+          key={upload.id}
           style={{
             background: "#fff",
             border: "1px solid var(--paper-edge)",
@@ -702,15 +851,15 @@ function Step4() {
           >
             {String(i + 1).padStart(2, "0")}
           </span>
-          <span style={{ flex: 1 }}>{l.t}</span>
+          <span style={{ flex: 1 }}>{fileNameToTitle(upload.name)}</span>
           <span
             style={{
               fontSize: 10,
-              color: l.ok ? "var(--accent)" : "var(--ink-3)",
+              color: upload.phase === "ready" ? "var(--accent)" : "var(--ink-3)",
               fontFamily: "var(--mono)",
             }}
           >
-            {l.d}
+            {upload.phase === "ready" ? "已就绪" : upload.phase === "uploading" ? "上传中…" : upload.phase === "transcoding" ? "转码中…" : "待上传"}
           </span>
         </div>
       ))}
@@ -743,14 +892,14 @@ function Step4() {
         }}
       >
         <I.info size={12} style={{ marginTop: 1, flex: "0 0 auto" }} />
-        <span>第二日仍在转码 · 发布后会自动开放，无需等待</span>
+        <span>{busy ? "正在创建课程并发布，请稍候…" : "点击下方按钮后，将创建课程、挂上已上传视频，并立即发布。"}</span>
       </div>
     </>
   );
 }
 
 function Step5({ tenantSlug }: { tenantSlug: string }) {
-  const shareUrl = `${tenantSlug}.tongzhou.app/c/qrqt`;
+  const shareUrl = `${tenantSlug}.tongzhou.app`;
   return (
     <>
       <div

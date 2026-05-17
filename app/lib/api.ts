@@ -125,6 +125,23 @@ export type ApiMeter = {
 
 export type ApiAuthSession = AuthSession;
 
+export type ApiUpload = {
+  id: string;
+  tenant_id: string;
+  filename: string;
+  mime: string;
+  size_bytes: number;
+  storage_driver: string;
+  storage_key: string;
+  url: string;
+  phase: "uploading" | "transcoding" | "ready" | "failed";
+  progress: number;
+  duration_sec: number | null;
+  meta: string | null;
+  created_at: number;
+  updated_at: number;
+};
+
 // ── 调用 ──
 
 export async function fetchAuthMe(): Promise<ApiAuthSession | null> {
@@ -158,6 +175,11 @@ export async function fetchMembers(): Promise<{ members: ApiMember[]; activeCoun
 export async function fetchMeters(): Promise<ApiMeter[]> {
   const { meters } = await call<{ meters: ApiMeter[] }>("/api/usage/meters");
   return meters;
+}
+
+export async function fetchUploads(): Promise<ApiUpload[]> {
+  const { uploads } = await call<{ uploads: ApiUpload[] }>("/api/uploads");
+  return uploads;
 }
 
 // 学员侧（公开，无需 tenant header）

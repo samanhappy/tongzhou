@@ -57,7 +57,7 @@ export async function create(input: {
 
 export async function update(
   id: string,
-  patch: Partial<Pick<Tenant, "name" | "tagline" | "theme_hue" | "group_link" | "plan">>,
+  patch: Partial<Pick<Tenant, "slug" | "name" | "tagline" | "theme_hue" | "group_link" | "plan">>,
 ): Promise<Tenant | undefined> {
   const fields: string[] = [];
   const values: (string | number)[] = [];

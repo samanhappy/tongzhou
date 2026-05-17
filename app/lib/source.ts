@@ -15,11 +15,13 @@ import {
   fetchTenant,
   fetchTrack,
   fetchTracks,
+  fetchUploads,
   tenantSlug,
   type ApiLesson,
   type ApiMember,
   type ApiMeter,
   type ApiTrack,
+  type ApiUpload,
 } from "./api";
 import {
   courseWatchRows as mockCourseWatchRows,
@@ -424,6 +426,84 @@ function memberFromApi(m: ApiMember): MemberRow {
     lastActive: m.last_active || "—",
     bound: !!m.bound,
     anonymous: !!m.anonymous,
+  };
+}
+
+// ─────────────────────────────────────────────
+// 内容库
+// ─────────────────────────────────────────────
+
+export type LibraryItem = {
+  id: string;
+  name: string;
+  phase: "uploading" | "transcoding" | "ready" | "failed";
+  sizeText: string;
+  createdAtLabel: string;
+  url?: string;
+  source: Source;
+};
+
+export type LibraryData = {
+  uploads: readonly LibraryItem[];
+  source: Source;
+};
+
+function formatBytes(size: number) {
+  if (size >= 1024 * 1024 * 1024) return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  if (size >= 1024 * 1024) return `${Math.round(size / (1024 * 1024))} MB`;
+  if (size >= 1024) return `${Math.round(size / 1024)} KB`;
+  return `${size} B`;
+}
+
+function uploadFromApi(upload: ApiUpload): LibraryItem {
+  return {
+    id: upload.id,
+    name: upload.filename,
+    phase: upload.phase,
+    sizeText: formatBytes(upload.size_bytes),
+    createdAtLabel: new Date(upload.created_at).toLocaleDateString("zh-CN", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    url: upload.url,
+    source: "api",
+  };
+}
+
+export async function getLibraryData(): Promise<LibraryData> {
+  if (apiEnabled()) {
+    const uploads = await fetchUploads();
+    return {
+      uploads: uploads.map(uploadFromApi),
+      source: "api",
+    };
+  }
+
+  const uploads: LibraryItem[] = mockTracks.flatMap((track) =>
+    track.lessons.map((lesson, index) => ({
+      id: `${track.id}-${lesson.id}`,
+      name: `${lesson.title}.mp4`,
+      phase:
+        lesson.status === "published"
+          ? "ready"
+          : lesson.status === "uploading"
+            ? "uploading"
+            : lesson.status === "transcoding"
+              ? "transcoding"
+              : lesson.status === "failed"
+                ? "failed"
+                : "ready",
+      sizeText: `${220 + index * 48} MB`,
+      createdAtLabel: `5/${String(2 + index).padStart(2, "0")}`,
+      source: "mock" as const,
+    })),
+  );
+
+  return {
+    uploads,
+    source: "mock",
   };
 }
 

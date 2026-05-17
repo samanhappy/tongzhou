@@ -23,6 +23,7 @@ export async function registerLessonRoutes(app: FastifyInstance) {
       durationSec?: number;
       durationText?: string;
       videoId?: string;
+      status?: "draft" | "uploading" | "transcoding" | "published" | "failed";
     };
   }>("/api/tracks/:trackId/lessons", async (req) => {
     const t = requireTenant(req);
@@ -44,6 +45,7 @@ export async function registerLessonRoutes(app: FastifyInstance) {
     Body: Partial<{
       title: string;
       summary: string;
+      videoId: string;
       status: "draft" | "uploading" | "transcoding" | "published" | "failed";
       durationSec: number;
       durationText: string;
@@ -54,6 +56,7 @@ export async function registerLessonRoutes(app: FastifyInstance) {
     const lesson = await repo.update(t.id, req.params.id, {
       title: req.body?.title,
       summary: req.body?.summary,
+      video_id: req.body?.videoId,
       status: req.body?.status,
       duration_sec: req.body?.durationSec,
       duration_text: req.body?.durationText,

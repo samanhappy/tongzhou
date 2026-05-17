@@ -58,7 +58,7 @@ export async function create(
 export async function update(
   tenantId: string,
   id: string,
-  patch: Partial<Pick<Track, "title" | "subtitle" | "one_line" | "status" | "cover_url" | "position">>,
+  patch: Partial<Pick<Track, "slug" | "title" | "subtitle" | "one_line" | "status" | "cover_url" | "position">>,
 ): Promise<Track | undefined> {
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
