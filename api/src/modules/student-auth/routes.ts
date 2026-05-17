@@ -7,8 +7,12 @@
 //   POST /api/x/:slug/auth/logout      清 cookie
 //   GET  /api/wechat/_dev/authorize    dev driver only,渲染填 openid 的本地表单
 //
-// state 编码:base64url(JSON.stringify({inv, next, csrf}))。
-// 用 tz_student_csrf cookie 防 state 伪造重放,callback 中校验后清掉。
+// **状态传递设计**:
+// 微信 OAuth 的 state 参数最大 128 字节,如果把 next / invite 都塞进去很容易超限,
+// 真实公众号 authorize 端点会直接返回 "Sorry"。所以:
+//   - state 只放 32 hex 字符的 csrf id
+//   - tz_student_csrf cookie 存 {csrf, next, inv} JSON(HttpOnly,SameSite=Lax)
+// callback 拿到 state 后,从 cookie 还原 next/inv,再校验 csrf 是否一致。
 
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { randomBytes } from "node:crypto";
@@ -40,20 +44,28 @@ export async function registerStudentAuthRoutes(app: FastifyInstance) {
     const next = safeNext(req.query?.next, `/x/${t.slug}`);
     const csrf = randomBytes(16).toString("hex");
 
-    const state = encodeState({ inv: invite, next, csrf });
-    reply.setCookie(STUDENT_CSRF_COOKIE, csrf, {
-      httpOnly: true,
-      secure: isProd(),
-      sameSite: "lax",
-      path: "/",
-      maxAge: CSRF_COOKIE_TTL_SEC,
-    });
+    // state 只塞 csrf id;next/invite 走 HttpOnly cookie,绕开微信 128 字节 state 限制
+    reply.setCookie(
+      STUDENT_CSRF_COOKIE,
+      encodeCsrfCookie({ csrf, next, inv: invite }),
+      {
+        httpOnly: true,
+        secure: isProd(),
+        sameSite: "lax",
+        path: "/",
+        maxAge: CSRF_COOKIE_TTL_SEC,
+      },
+    );
 
     const redirectUri = `${config.wechat.oauthRedirectBase}/api/x/${encodeURIComponent(
       t.slug,
     )}/auth/callback`;
     const scope = invite ? "snsapi_userinfo" : "snsapi_base";
-    const url = getWechat().buildAuthorizeUrl({ redirectUri, state, scope });
+    const url = getWechat().buildAuthorizeUrl({
+      redirectUri,
+      state: csrf,
+      scope,
+    });
     return reply.redirect(url);
   });
 
@@ -71,14 +83,13 @@ export async function registerStudentAuthRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "missing code/state" });
     }
 
-    const state = decodeState(stateRaw);
-    if (!state) return reply.code(400).send({ error: "bad state" });
-
-    const csrfCookie = req.cookies?.[STUDENT_CSRF_COOKIE];
+    const csrfCookieRaw = req.cookies?.[STUDENT_CSRF_COOKIE];
     reply.clearCookie(STUDENT_CSRF_COOKIE, { path: "/" });
-    if (!csrfCookie || csrfCookie !== state.csrf) {
+    const cookieState = csrfCookieRaw ? decodeCsrfCookie(csrfCookieRaw) : null;
+    if (!cookieState || cookieState.csrf !== stateRaw) {
       return reply.code(400).send({ error: "csrf mismatch" });
     }
+    const state = cookieState;
 
     let user;
     try {
@@ -279,9 +290,9 @@ async function issueSessionCookie(
   });
 }
 
-type State = { inv?: string; next: string; csrf: string };
+type CsrfState = { csrf: string; next: string; inv?: string };
 
-function encodeState(s: State): string {
+function encodeCsrfCookie(s: CsrfState): string {
   return Buffer.from(JSON.stringify(s), "utf8")
     .toString("base64")
     .replace(/\+/g, "-")
@@ -289,19 +300,19 @@ function encodeState(s: State): string {
     .replace(/=+$/, "");
 }
 
-function decodeState(raw: string): State | null {
+function decodeCsrfCookie(raw: string): CsrfState | null {
   try {
     const b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
     const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
     const json = Buffer.from(padded, "base64").toString("utf8");
     const obj = JSON.parse(json);
-    if (typeof obj?.next !== "string" || typeof obj?.csrf !== "string") {
+    if (typeof obj?.csrf !== "string" || typeof obj?.next !== "string") {
       return null;
     }
     return {
-      inv: typeof obj.inv === "string" ? obj.inv : undefined,
-      next: obj.next,
       csrf: obj.csrf,
+      next: obj.next,
+      inv: typeof obj.inv === "string" ? obj.inv : undefined,
     };
   } catch {
     return null;
