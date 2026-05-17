@@ -70,7 +70,15 @@ export type VideoDriver = "local" | "tencent-vod";
 export const config = {
   port: num("PORT", 4100),
   logLevel: need("LOG_LEVEL", "info"),
-  corsOrigin: need("CORS_ORIGIN", "http://localhost:4173"),
+  corsOrigin: need(
+    "CORS_ORIGIN",
+    [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:4173",
+      "http://127.0.0.1:4173",
+    ].join(","),
+  ),
 
   auth: {
     jwtSecret: process.env.AUTH_JWT_SECRET,

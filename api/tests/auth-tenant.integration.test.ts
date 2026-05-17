@@ -70,4 +70,28 @@ describe("auth session and tenant isolation", () => {
     });
     expect(otherTenantTrack.statusCode).toBe(404);
   });
+
+  test("allows common local frontend origins so browser can see real API responses", async () => {
+    const health = await app.inject({
+      method: "GET",
+      url: "/api/healthz",
+      headers: { origin: "http://localhost:3000" },
+    });
+
+    expect(health.statusCode).toBe(200);
+    expect(health.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:3000",
+    );
+
+    const protectedTracks = await app.inject({
+      method: "GET",
+      url: "/api/tracks",
+      headers: { origin: "http://localhost:3000" },
+    });
+
+    expect(protectedTracks.statusCode).toBe(401);
+    expect(protectedTracks.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:3000",
+    );
+  });
 });

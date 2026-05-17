@@ -9,7 +9,14 @@ const root = fs.mkdtempSync(
 process.env.NODE_ENV = "test";
 process.env.LOG_LEVEL = "silent";
 process.env.PORT = process.env.PORT ?? "4100";
-process.env.CORS_ORIGIN = process.env.CORS_ORIGIN ?? "http://127.0.0.1:4173";
+process.env.CORS_ORIGIN =
+  process.env.CORS_ORIGIN ??
+  [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+  ].join(",");
 process.env.AUTH_JWT_SECRET =
   process.env.AUTH_JWT_SECRET ?? "test-secret-with-32-plus-characters";
 process.env.AUTH_DEV_MODE = "false";
