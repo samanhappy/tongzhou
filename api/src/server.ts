@@ -1,6 +1,7 @@
 // 同舟 · Fastify 服务器装配
 
 import fastifyCors from "@fastify/cors";
+import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
 import fastify, { type FastifyInstance } from "fastify";
 import path from "node:path";
@@ -19,6 +20,7 @@ import { registerMemberRoutes } from "./modules/members/routes.js";
 import { registerUsageRoutes } from "./modules/usage/routes.js";
 import { registerUploadRoutes } from "./modules/uploads/routes.js";
 import { registerPublicRoutes } from "./modules/public/routes.js";
+import { registerAuthRoutes } from "./modules/auth/routes.js";
 
 export async function buildServer(): Promise<FastifyInstance> {
   await initDb();
@@ -30,6 +32,8 @@ export async function buildServer(): Promise<FastifyInstance> {
     logger: { level: config.logLevel },
     bodyLimit: 50 * 1024 * 1024,
   });
+
+  await app.register(fastifyCookie);
 
   await app.register(fastifyCors, {
     origin: config.corsOrigin.split(",").map((s) => s.trim()),
@@ -69,6 +73,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   }
 
   await registerTenantRoutes(app);
+  await registerAuthRoutes(app);
   await registerTrackRoutes(app);
   await registerLessonRoutes(app);
   await registerMemberRoutes(app);

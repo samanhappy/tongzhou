@@ -50,6 +50,15 @@ function optNum(name: string): number | undefined {
   return n;
 }
 
+function bool(name: string, fallback: boolean): boolean {
+  const v = process.env[name];
+  if (v == null || v === "") return fallback;
+  const normalized = v.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  throw new Error(`[env] ${name} not a boolean: ${v}`);
+}
+
 export type DbDriver = "sqlite" | "postgres";
 export type CacheDriver = "memory" | "redis";
 export type StorageDriver = "local" | "tencent-cos";
@@ -59,6 +68,11 @@ export const config = {
   port: num("PORT", 4100),
   logLevel: need("LOG_LEVEL", "info"),
   corsOrigin: need("CORS_ORIGIN", "http://localhost:4173"),
+
+  auth: {
+    jwtSecret: process.env.AUTH_JWT_SECRET,
+    devMode: bool("AUTH_DEV_MODE", process.env.NODE_ENV !== "production"),
+  },
 
   db: {
     driver: need("DB_DRIVER", "sqlite") as DbDriver,

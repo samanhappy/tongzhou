@@ -3,6 +3,9 @@
 // 设计：服务器端 fetch（Next.js Server Components 调用）。
 // 启动时若 `API_BASE` 未设置，调用方会回退到 lib/mock.ts（见 lib/source.ts）。
 
+import { headers } from "next/headers";
+import type { AuthSession } from "./auth-shared";
+
 const BASE = process.env.API_BASE; // 例：http://localhost:4100
 const TENANT_SLUG = process.env.TENANT_SLUG || "xingchunge";
 
@@ -10,8 +13,24 @@ export function apiEnabled() {
   return !!BASE;
 }
 
+export function getApiRuntimeConfig() {
+  return {
+    base: BASE ?? null,
+    tenantSlug: TENANT_SLUG,
+  };
+}
+
 export function tenantSlug() {
   return TENANT_SLUG;
+}
+
+async function cookieHeader() {
+  try {
+    const requestHeaders = await headers();
+    return requestHeaders.get("cookie") ?? "";
+  } catch {
+    return "";
+  }
 }
 
 async function call<T>(
@@ -20,15 +39,18 @@ async function call<T>(
 ): Promise<T> {
   if (!BASE) throw new Error("[api] API_BASE not set");
   const { tenantHeader = true, ...rest } = init;
-  const headers: Record<string, string> = {
+  const requestHeaders: Record<string, string> = {
     "content-type": "application/json",
     ...(rest.headers as Record<string, string> | undefined),
   };
-  if (tenantHeader) headers["x-tenant-slug"] = TENANT_SLUG;
+  const cookies = await cookieHeader();
+  if (cookies && !requestHeaders.cookie) requestHeaders.cookie = cookies;
+  if (tenantHeader) requestHeaders["x-tenant-slug"] = TENANT_SLUG;
   const res = await fetch(`${BASE}${path}`, {
     ...rest,
-    headers,
+    headers: requestHeaders,
     cache: "no-store",
+    credentials: "include",
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -101,7 +123,18 @@ export type ApiMeter = {
   sample: string;
 };
 
+export type ApiAuthSession = AuthSession;
+
 // ── 调用 ──
+
+export async function fetchAuthMe(): Promise<ApiAuthSession | null> {
+  if (!BASE) return null;
+  try {
+    return await call<ApiAuthSession>("/api/auth/me");
+  } catch {
+    return null;
+  }
+}
 
 // 创作者侧（需要 x-tenant-slug header）
 export async function fetchTenant(): Promise<ApiTenant> {

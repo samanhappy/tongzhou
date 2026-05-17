@@ -24,6 +24,7 @@ import {
   currentScope,
   type Db,
   type PreparedStatement,
+  requestScope,
   type SqlValue,
 } from "./index.js";
 
@@ -108,7 +109,7 @@ function wrap(pool: Pool): Db & { __pool: Pool } {
       const c = await pool.connect();
       try {
         await c.query("BEGIN");
-        const r = await fn();
+        const r = await requestScope.run({ client: c }, async () => fn());
         await c.query("COMMIT");
         return r;
       } catch (e) {

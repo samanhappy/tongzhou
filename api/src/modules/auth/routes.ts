@@ -14,7 +14,7 @@ import { HttpError } from "../../middleware/error.js";
 import { getDb } from "../../db/index.js";
 import * as tenantsRepo from "../tenants/repo.js";
 import * as authRepo from "./repo.js";
-import { COOKIE_NAME, signJwt, verifyJwt } from "./jwt.js";
+import { COOKIE_NAME, signJwt } from "./jwt.js";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,7 +43,11 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   app.post<{
     Body: { email: string; password: string; slug: string; name: string };
   }>("/api/auth/register", async (req, reply) => {
-    const { email, password, slug, name } = req.body ?? ({} as never);
+    const raw = req.body ?? ({} as never);
+    const email = raw.email?.trim().toLowerCase();
+    const password = raw.password;
+    const slug = raw.slug?.trim().toLowerCase();
+    const name = raw.name?.trim();
 
     if (!email || !EMAIL_RE.test(email)) throw new HttpError(400, "invalid email");
     if (!password || password.length < 8) throw new HttpError(400, "password >= 8 chars");
@@ -87,7 +91,9 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   app.post<{ Body: { email: string; password: string } }>(
     "/api/auth/login",
     async (req, reply) => {
-      const { email, password } = req.body ?? ({} as never);
+      const raw = req.body ?? ({} as never);
+      const email = raw.email?.trim().toLowerCase();
+      const password = raw.password;
       if (!email || !password) throw new HttpError(400, "email & password required");
 
       const user = await authRepo.getByEmail(email);
@@ -118,19 +124,18 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 
   // ─── me ───
-  // 不需要 tenant header — 自己从 cookie 解
+  // 中间件已完成 cookie JWT / dev fallback 解析
   app.get("/api/auth/me", async (req, reply) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const token = (req as any).cookies?.[COOKIE_NAME];
-    if (!token) return reply.code(401).send({ error: "no session" });
-    const payload = await verifyJwt(token);
-    if (!payload) return reply.code(401).send({ error: "invalid session" });
-    const user = await authRepo.getById(payload.sub);
-    if (!user) return reply.code(401).send({ error: "user gone" });
-    const tenant = await tenantsRepo.getById(user.tenant_id);
-    if (!tenant) return reply.code(500).send({ error: "user has no tenant" });
+    if (!req.auth || !req.tenant) return reply.code(401).send({ error: "no session" });
+    const tenant = await tenantsRepo.getById(req.tenant.id);
+    if (!tenant) return reply.code(500).send({ error: "tenant missing" });
     return {
-      user: { id: user.id, email: user.email, role: user.role },
+      user: {
+        id: req.auth.userId,
+        email: req.auth.email,
+        role: req.auth.role,
+        dev: req.auth.dev || undefined,
+      },
       tenant: { id: tenant.id, slug: tenant.slug, name: tenant.name },
     };
   });

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { I } from "@/components/icons";
 import { Bar, TZMark, XCMark } from "@/components/primitives";
+import { registerAuth } from "@/lib/auth-client";
 import { tenant } from "@/lib/mock";
 
 const STEPS = [
@@ -18,8 +19,56 @@ const STEPS = [
   { title: "拿到分享链接 · 完成", time: "4 min" },
 ] as const;
 
-export function OnboardingClient() {
+type Step1Form = {
+  email: string;
+  password: string;
+  name: string;
+  slug: string;
+};
+
+export function OnboardingClient({ apiBase }: { apiBase: string | null }) {
   const [step, setStep] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<Step1Form>({
+    email: "hello@xingchunge.com",
+    password: "",
+    name: tenant.name,
+    slug: tenant.slug,
+  });
+  const [tenantDraft, setTenantDraft] = useState({
+    name: tenant.name,
+    slug: tenant.slug,
+  });
+
+  async function handleNext() {
+    if (step !== 1) {
+      setStep((current) => Math.min(STEPS.length, current + 1));
+      return;
+    }
+
+    setError(null);
+    setTenantDraft({ name: form.name || tenant.name, slug: form.slug || tenant.slug });
+
+    if (!apiBase) {
+      setStep(2);
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const session = await registerAuth(apiBase, form);
+      setTenantDraft({
+        name: session.tenant.name,
+        slug: session.tenant.slug,
+      });
+      setStep(2);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "注册失败，请稍后再试");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div
@@ -57,23 +106,25 @@ export function OnboardingClient() {
         </div>
 
         <StepCard step={step} total={STEPS.length} title={STEPS[step - 1].title} time={STEPS[step - 1].time}>
-          {step === 1 && <Step1 />}
-          {step === 2 && <Step2 />}
+          {step === 1 && <Step1 apiBase={apiBase} busy={busy} error={error} form={form} setForm={setForm} />}
+          {step === 2 && <Step2 tenantName={tenantDraft.name} tenantSlug={tenantDraft.slug} />}
           {step === 3 && <Step3 />}
           {step === 4 && <Step4 />}
-          {step === 5 && <Step5 />}
+          {step === 5 && <Step5 tenantSlug={tenantDraft.slug} />}
 
           {step < 5 ? (
             <button
               className="tz-btn tz-btn-primary"
-              onClick={() => setStep((s) => Math.min(STEPS.length, s + 1))}
+              onClick={handleNext}
+              disabled={busy}
               style={{
                 width: "100%",
                 marginTop: 16,
                 justifyContent: "center",
+                opacity: busy ? 0.8 : 1,
               }}
             >
-              {step === 1 && "创建我的空间"}
+              {step === 1 && (busy ? "正在创建空间…" : "创建我的空间")}
               {step === 2 && "下一步 · 上传视频"}
               {step === 3 && "下一步 · 组织成课程"}
               {step === 4 && (
@@ -229,7 +280,19 @@ function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Step1() {
+function Step1({
+  apiBase,
+  busy,
+  error,
+  form,
+  setForm,
+}: {
+  apiBase: string | null;
+  busy: boolean;
+  error: string | null;
+  form: Step1Form;
+  setForm: React.Dispatch<React.SetStateAction<Step1Form>>;
+}) {
   return (
     <>
       <p
@@ -242,10 +305,28 @@ function Step1() {
       >
         邮箱注册即开通你的独立空间，<b>不需要</b>微信公众号、不需要支付商户号。
       </p>
+
+      {!apiBase && (
+        <div
+          style={{
+            padding: "10px 12px",
+            background: "var(--paper-deep)",
+            borderRadius: 6,
+            fontSize: 11,
+            color: "var(--ink-3)",
+            lineHeight: 1.6,
+            marginBottom: 12,
+          }}
+        >
+          当前未配置 <span className="tz-mono">API_BASE</span>，点击后会继续离线演示，不会真的创建账号。
+        </div>
+      )}
+
       <FieldRow label="邮箱">
         <input
           className="tz-input"
-          defaultValue="hello@xingchunge.com"
+          value={form.email}
+          onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
           style={{ fontSize: 12 }}
         />
       </FieldRow>
@@ -253,17 +334,62 @@ function Step1() {
         <input
           className="tz-input"
           type="password"
-          defaultValue="•••••••••••"
+          value={form.password}
+          onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
           style={{ fontSize: 12 }}
         />
       </FieldRow>
       <FieldRow label="创作者名 · 空间名">
         <input
           className="tz-input"
-          defaultValue={tenant.name}
+          value={form.name}
+          onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           style={{ fontSize: 12 }}
         />
       </FieldRow>
+      <FieldRow label="空间 slug">
+        <div style={{ display: "flex" }}>
+          <input
+            className="tz-input"
+            value={form.slug}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, slug: event.target.value.toLowerCase() }))
+            }
+          style={{ fontSize: 12 }}
+        />
+          <div
+            style={{
+              background: "var(--paper-deep)",
+              border: "1px solid var(--paper-edge)",
+              borderLeft: 0,
+              borderRadius: "0 6px 6px 0",
+              padding: "0 10px",
+              display: "flex",
+              alignItems: "center",
+              fontSize: 11,
+              color: "var(--ink-2)",
+              fontFamily: "var(--mono)",
+            }}
+          >
+            .tongzhou.app
+          </div>
+        </div>
+      </FieldRow>
+      {error && (
+        <div
+          style={{
+            padding: "10px 12px",
+            borderRadius: 6,
+            background: "color-mix(in oklch, var(--seal) 10%, var(--paper))",
+            color: "var(--seal)",
+            fontSize: 11,
+            lineHeight: 1.6,
+            marginBottom: 12,
+          }}
+        >
+          {error}
+        </div>
+      )}
       <div
         style={{
           padding: "10px 12px",
@@ -278,11 +404,16 @@ function Step1() {
         同舟不收钱，你的学员通过自己的渠道（小报童 / 知识星球 / 微信红包）付费；
         同舟只负责交付。
       </div>
+      {busy && (
+        <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 10 }}>
+          正在创建 tenant、owner 账号并下发 cookie，请稍候…
+        </div>
+      )}
     </>
   );
 }
 
-function Step2() {
+function Step2({ tenantName, tenantSlug }: { tenantName: string; tenantSlug: string }) {
   return (
     <>
       <p
@@ -342,7 +473,7 @@ function Step2() {
         <div style={{ display: "flex" }}>
           <input
             className="tz-input"
-            defaultValue={tenant.slug}
+            defaultValue={tenantSlug}
             style={{
               fontSize: 12,
               borderTopRightRadius: 0,
@@ -368,6 +499,10 @@ function Step2() {
         </div>
         <div style={{ fontSize: 10, color: "var(--accent)", marginTop: 4 }}>✓ 可用</div>
       </FieldRow>
+
+      <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 10 }}>
+        当前空间：{tenantName}
+      </div>
     </>
   );
 }
@@ -614,8 +749,8 @@ function Step4() {
   );
 }
 
-function Step5() {
-  const shareUrl = `${tenant.slug}.tongzhou.app/c/qrqt`;
+function Step5({ tenantSlug }: { tenantSlug: string }) {
+  const shareUrl = `${tenantSlug}.tongzhou.app/c/qrqt`;
   return (
     <>
       <div
@@ -697,7 +832,7 @@ function Step5() {
           </div>
           <div style={{ display: "flex", gap: 4 }}>
             <Link
-              href={`/x/${tenant.slug}`}
+              href={`/x/${tenantSlug}`}
               className="tz-btn"
               style={{ padding: "4px 8px", fontSize: 10.5 }}
             >
@@ -722,7 +857,7 @@ function Step5() {
       <div style={{ fontSize: 11.5, fontWeight: 500, marginBottom: 8 }}>下一步建议</div>
       {[
         { i: <I.csv size={12} />, t: "导入第一批学员名单（CSV）", to: "/app/members" },
-        { i: <I.share size={12} />, t: "把链接发到你已有的微信群", to: `/x/${tenant.slug}` },
+        { i: <I.share size={12} />, t: "把链接发到你已有的微信群", to: `/x/${tenantSlug}` },
         { i: <I.usage size={12} />, t: "在用量面板了解 Freemium 配额", to: "/app/usage" },
       ].map((s, i) => (
         <Link

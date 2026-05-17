@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE (tenant_id, email)
 );
 CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- ──────────────────────────────────────────────
 -- 2. 课程结构（V0：Track + Lesson；Stage / Cohort 仅占位）

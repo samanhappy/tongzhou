@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE (tenant_id, email)
 );
 CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- ──────────────────────────────────────────────
 -- 2. 课程结构
@@ -198,6 +199,7 @@ BEGIN
     'usage_events','usage_meters','tenant_quotas','lesson_progress'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
     -- 删除旧策略后重建,保证 schema 重跑幂等
     EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', t);
     EXECUTE format(

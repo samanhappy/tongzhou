@@ -4,6 +4,7 @@
 // HS256 + 32 字节 secret(env);生产请确保 secret >= 32 字节随机。
 
 import { SignJWT, jwtVerify } from "jose";
+import { config } from "../../env.js";
 
 export type JwtPayload = {
   sub: string; // user.id
@@ -15,7 +16,7 @@ const ISSUER = "tongzhou-api";
 const AUDIENCE = "tongzhou-app";
 
 function getSecret(): Uint8Array {
-  const s = process.env.AUTH_JWT_SECRET;
+  const s = config.auth.jwtSecret;
   if (!s) {
     throw new Error("[auth/jwt] AUTH_JWT_SECRET not set");
   }

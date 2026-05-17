@@ -10,7 +10,10 @@
 // SQLite 模式下,后两个钩子的 PG 分支是 no-op。
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { config } from "../env.js";
 import { getDb, requestScope } from "../db/index.js";
+import * as authRepo from "../modules/auth/repo.js";
+import { COOKIE_NAME, verifyJwt } from "../modules/auth/jwt.js";
 import * as tenantsRepo from "../modules/tenants/repo.js";
 
 export type TenantCtx = {
@@ -20,13 +23,79 @@ export type TenantCtx = {
   plan: string;
 };
 
+export type AuthCtx = {
+  userId: string;
+  email: string;
+  role: string;
+  dev: boolean;
+};
+
 declare module "fastify" {
   interface FastifyRequest {
     tenant?: TenantCtx;
+    auth?: AuthCtx;
   }
 }
 
 const HEADER = "x-tenant-slug";
+const PUBLIC_NO_AUTH_PATHS = new Set([
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/healthz",
+]);
+
+function pathOf(req: FastifyRequest) {
+  return req.url.split("?")[0] ?? req.url;
+}
+
+function headerSlug(req: FastifyRequest): string | undefined {
+  const slug = req.headers[HEADER];
+  return typeof slug === "string" && slug ? slug : undefined;
+}
+
+function toTenantCtx(tenant: tenantsRepo.Tenant): TenantCtx {
+  return {
+    id: tenant.id,
+    slug: tenant.slug,
+    name: tenant.name,
+    plan: tenant.plan,
+  };
+}
+
+async function resolveSession(req: FastifyRequest): Promise<
+  { auth: AuthCtx; tenant: TenantCtx } | undefined
+> {
+  const token = req.cookies?.[COOKIE_NAME];
+  if (!token) return undefined;
+
+  const payload = await verifyJwt(token);
+  if (!payload) return undefined;
+
+  const user = await authRepo.getById(payload.sub);
+  if (!user || user.tenant_id !== payload.tid) return undefined;
+
+  const tenant = await tenantsRepo.getById(user.tenant_id);
+  if (!tenant) return undefined;
+
+  return {
+    auth: {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      dev: false,
+    },
+    tenant: toTenantCtx(tenant),
+  };
+}
+
+function buildDevAuth(tenant: TenantCtx): AuthCtx {
+  return {
+    userId: `dev_${tenant.id}`,
+    email: `dev+${tenant.slug}@tongzhou.local`,
+    role: "owner",
+    dev: true,
+  };
+}
 
 export function registerTenantHook(app: FastifyInstance) {
   // 1. onRequest: 建立 ALS scope(任何请求都建,但只有 PG 模式才会往里放 client)
@@ -38,34 +107,46 @@ export function registerTenantHook(app: FastifyInstance) {
 
   // 2. preHandler: 解析 tenant + (PG) attach client
   app.addHook("preHandler", async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!req.url.startsWith("/api/")) return;
+    const pathname = pathOf(req);
+    if (!pathname.startsWith("/api/")) return;
 
     let tenantId: string | undefined;
 
     // 公开学员接口：从 URL 解析 slug
-    if (req.url.startsWith("/api/x/")) {
-      const m = /^\/api\/x\/([^/?]+)/.exec(req.url);
+    if (pathname.startsWith("/api/x/")) {
+      const m = /^\/api\/x\/([^/?]+)/.exec(pathname);
       const slug = m?.[1];
       if (slug) {
         const t = await tenantsRepo.getBySlug(decodeURIComponent(slug));
-        if (t) tenantId = t.id;
+        if (t) {
+          req.tenant = toTenantCtx(t);
+          tenantId = t.id;
+        }
       }
       // 学员接口找不到 tenant 不直接挡（让 handler 决定 404/200）
     }
     // 注册 / 健康检查 / 直接放行
-    else if (req.url.startsWith("/api/tenants") && req.method === "POST") {
-      // pass
-    } else if (req.url === "/api/healthz") {
+    else if ((pathname.startsWith("/api/tenants") && req.method === "POST") || PUBLIC_NO_AUTH_PATHS.has(pathname)) {
       // pass
     } else {
-      const slug = req.headers[HEADER];
-      if (typeof slug !== "string" || !slug) {
-        return reply.code(401).send({ error: "missing tenant header (x-tenant-slug)" });
+      const session = await resolveSession(req);
+      if (session) {
+        req.auth = session.auth;
+        req.tenant = session.tenant;
+        tenantId = session.tenant.id;
+      } else if (config.auth.devMode) {
+        const slug = headerSlug(req);
+        if (!slug) {
+          return reply.code(401).send({ error: "missing session" });
+        }
+        const t = await tenantsRepo.getBySlug(slug);
+        if (!t) return reply.code(404).send({ error: `tenant not found: ${slug}` });
+        req.tenant = toTenantCtx(t);
+        req.auth = buildDevAuth(req.tenant);
+        tenantId = t.id;
+      } else {
+        return reply.code(401).send({ error: "invalid or missing session" });
       }
-      const t = await tenantsRepo.getBySlug(slug);
-      if (!t) return reply.code(404).send({ error: `tenant not found: ${slug}` });
-      req.tenant = t as TenantCtx;
-      tenantId = t.id;
     }
 
     // 3. PG 模式：checkout 一个 client + BEGIN + SET LOCAL app.tenant_id

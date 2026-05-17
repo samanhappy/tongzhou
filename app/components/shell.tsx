@@ -4,8 +4,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, type CSSProperties, type ReactNode } from "react";
+import { logoutAuth } from "@/lib/auth-client";
+import { useAuthSession } from "./auth-session-context";
 import { I } from "./icons";
 import { TZMark, XCMark } from "./primitives";
 import { Bar } from "./primitives";
@@ -13,7 +15,7 @@ import { Bar } from "./primitives";
 type NavItem = {
   id: string;
   label: string;
-  icon: (p: { size?: number; style?: React.CSSProperties }) => React.ReactElement;
+  icon: (p: { size?: number; style?: CSSProperties }) => React.ReactElement;
   href: string;
   count?: number;
   badge?: string;
@@ -46,7 +48,25 @@ const NAV: NavGroup[] = [
   },
 ];
 
-function Sidebar({ activeHref }: { activeHref: string }) {
+function Sidebar({
+  activeHref,
+  email,
+  hasSession,
+  isDev,
+  loggingOut,
+  onLogout,
+  tenantName,
+  tenantSlug,
+}: {
+  activeHref: string;
+  email: string;
+  hasSession: boolean;
+  isDev: boolean;
+  loggingOut: boolean;
+  onLogout: () => void;
+  tenantName: string;
+  tenantSlug: string;
+}) {
   return (
     <aside
       style={{
@@ -86,9 +106,9 @@ function Sidebar({ activeHref }: { activeHref: string }) {
       >
         <XCMark size={20} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 500, lineHeight: 1.2 }}>醒春阁</div>
+          <div style={{ fontSize: 12.5, fontWeight: 500, lineHeight: 1.2 }}>{tenantName}</div>
           <div style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 1 }}>
-            xingchunge.tongzhou.app
+            {tenantSlug}.tongzhou.app
           </div>
         </div>
         <I.chevD size={12} style={{ color: "var(--ink-3)" }} />
@@ -181,6 +201,50 @@ function Sidebar({ activeHref }: { activeHref: string }) {
 
       <div style={{ flex: 1 }} />
 
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid var(--paper-edge)",
+          borderRadius: 8,
+          padding: 12,
+          fontSize: 11.5,
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.05em" }}>当前身份</span>
+          {isDev && <span className="tz-chip">DEV</span>}
+        </div>
+        <div
+          className="tz-mono"
+          style={{
+            fontSize: 11,
+            color: "var(--ink-2)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            marginBottom: 10,
+          }}
+        >
+          {email}
+        </div>
+        {hasSession ? (
+          <button
+            type="button"
+            className="tz-btn"
+            onClick={onLogout}
+            disabled={loggingOut}
+            style={{ width: "100%", justifyContent: "center" }}
+          >
+            {loggingOut ? "退出中…" : "退出登录"}
+          </button>
+        ) : (
+          <div style={{ fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.6 }}>
+            当前未接入真实会话，仍处于离线 Demo 模式。
+          </div>
+        )}
+      </div>
+
       {/* 方案卡片 */}
       <div
         style={{
@@ -220,10 +284,12 @@ function Sidebar({ activeHref }: { activeHref: string }) {
 }
 
 function Topbar({
+  avatarLabel,
   title,
   breadcrumb,
   actions,
 }: {
+  avatarLabel: string;
   title: string;
   breadcrumb?: string[];
   actions?: ReactNode;
@@ -303,7 +369,7 @@ function Topbar({
           fontSize: 12,
         }}
       >
-        春
+        {avatarLabel}
       </div>
     </div>
   );
@@ -321,6 +387,32 @@ export function CreatorShell({
   children: ReactNode;
 }) {
   const pathname = usePathname() || "";
+  const router = useRouter();
+  const { apiBase, session, setSession } = useAuthSession();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const tenantName = session?.tenant.name ?? "醒春阁";
+  const tenantSlug = session?.tenant.slug ?? "xingchunge";
+  const email = session?.user.email ?? "demo@tongzhou.local";
+  const avatarLabel = (session?.user.email || tenantName).slice(0, 1).toUpperCase();
+
+  async function handleLogout() {
+    if (!apiBase) {
+      router.push("/");
+      return;
+    }
+
+    setLoggingOut(true);
+    try {
+      await logoutAuth(apiBase);
+      setSession(null);
+      router.push("/login");
+      router.refresh();
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
   return (
     <div
       className="tz-paper"
@@ -332,9 +424,18 @@ export function CreatorShell({
         color: "var(--ink)",
       }}
     >
-      <Sidebar activeHref={pathname} />
+      <Sidebar
+        activeHref={pathname}
+        email={email}
+        hasSession={!!session}
+        isDev={!!session?.user.dev}
+        loggingOut={loggingOut}
+        onLogout={handleLogout}
+        tenantName={tenantName}
+        tenantSlug={tenantSlug}
+      />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <Topbar title={title} breadcrumb={breadcrumb} actions={actions} />
+        <Topbar avatarLabel={avatarLabel} title={title} breadcrumb={breadcrumb} actions={actions} />
         <div
           style={{
             flex: 1,
