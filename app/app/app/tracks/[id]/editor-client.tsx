@@ -496,15 +496,20 @@ export function TrackEditorClient({
           </div>
         </div>
 
-        {error && <div className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--danger)" }}>{error}</div>}
-        {notice && <div className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--accent-deep)" }}>{notice}</div>}
+        {error && <div data-testid="editor-error" className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--danger)" }}>{error}</div>}
+        {notice && <div data-testid="editor-notice" className="tz-card" style={{ padding: 12, marginBottom: 12, color: "var(--accent-deep)" }}>{notice}</div>}
 
         <SectionLabel
           stamp="时"
           title="课时"
           sub={`共 ${lessons.length} 节 · 拖拽可调整顺序`}
           right={
-            <button className="tz-btn" type="button" onClick={() => setShowNewLesson((current) => !current)}>
+            <button
+              data-testid="lesson-add-toggle"
+              className="tz-btn"
+              type="button"
+              onClick={() => setShowNewLesson((current) => !current)}
+            >
               <I.plus size={13} /> 新增课时
             </button>
           }
@@ -515,14 +520,25 @@ export function TrackEditorClient({
             <div style={{ display: "grid", gap: 10 }}>
               <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                 课时标题
-                <input className="tz-input" value={newLesson.title} onChange={(event) => setNewLesson((current) => ({ ...current, title: event.target.value }))} />
+                <input
+                  data-testid="new-lesson-title"
+                  className="tz-input"
+                  value={newLesson.title}
+                  onChange={(event) => setNewLesson((current) => ({ ...current, title: event.target.value }))}
+                />
               </label>
               <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
                 简介
-                <input className="tz-input" value={newLesson.summary} onChange={(event) => setNewLesson((current) => ({ ...current, summary: event.target.value }))} />
+                <input
+                  data-testid="new-lesson-summary"
+                  className="tz-input"
+                  value={newLesson.summary}
+                  onChange={(event) => setNewLesson((current) => ({ ...current, summary: event.target.value }))}
+                />
               </label>
               <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center" }}>
                 <select
+                  data-testid="new-lesson-status"
                   className="tz-input"
                   value={newLesson.status}
                   onChange={(event) => setNewLesson((current) => ({ ...current, status: event.target.value as LessonItem["status"] }))}
@@ -536,7 +552,15 @@ export function TrackEditorClient({
                 </select>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="tz-btn" type="button" onClick={() => setShowNewLesson(false)} disabled={busy}>取消</button>
-                  <button className="tz-btn tz-btn-primary" type="button" onClick={addLesson} disabled={busy}>保存课时</button>
+                  <button
+                    data-testid="new-lesson-save"
+                    className="tz-btn tz-btn-primary"
+                    type="button"
+                    onClick={addLesson}
+                    disabled={busy}
+                  >
+                    保存课时
+                  </button>
                 </div>
               </div>
             </div>
@@ -554,6 +578,7 @@ export function TrackEditorClient({
             return (
               <div
                 key={lesson.id}
+                data-testid="lesson-card"
                 draggable
                 onDragStart={(event) => onDragStart(event, index)}
                 onDragOver={(event) => onDragOver(event, index)}
@@ -592,7 +617,7 @@ export function TrackEditorClient({
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
                       <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--ink-3)" }}>{String(index + 1).padStart(2, "0")}</span>
-                      <span style={{ fontSize: 13.5, fontWeight: 500 }}>{lesson.title}</span>
+                      <span data-testid="lesson-card-title" style={{ fontSize: 13.5, fontWeight: 500 }}>{lesson.title}</span>
                     </div>
                     <div style={{ fontSize: 11, color: "var(--ink-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lesson.summary || "未填写简介"}</div>
                   </div>

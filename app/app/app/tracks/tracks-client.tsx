@@ -105,7 +105,12 @@ export function TracksClient({
         title="全部课程"
         sub={`共 ${tracks.length} 门 · 含草稿`}
         right={
-          <button className="tz-btn tz-btn-primary" type="button" onClick={() => setShowCreate((current) => !current)}>
+          <button
+            data-testid="track-create-toggle"
+            className="tz-btn tz-btn-primary"
+            type="button"
+            onClick={() => setShowCreate((current) => !current)}
+          >
             <I.plus size={14} /> 新建课程
           </button>
         }
@@ -116,15 +121,27 @@ export function TracksClient({
           <div style={{ display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 10, marginBottom: 10 }}>
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               课程标题
-              <input className="tz-input" value={title} onChange={(event) => {
-                const nextTitle = event.target.value;
-                setTitle(nextTitle);
-                if (!slug) setSlug(suggestSlug(nextTitle));
-              }} placeholder="例如：七天成长计划" />
+              <input
+                data-testid="track-title-input"
+                className="tz-input"
+                value={title}
+                onChange={(event) => {
+                  const nextTitle = event.target.value;
+                  setTitle(nextTitle);
+                  if (!slug) setSlug(suggestSlug(nextTitle));
+                }}
+                placeholder="例如：七天成长计划"
+              />
             </label>
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               副标题
-              <input className="tz-input" value={subtitle} onChange={(event) => setSubtitle(event.target.value)} placeholder="例如：习作启蒙" />
+              <input
+                data-testid="track-subtitle-input"
+                className="tz-input"
+                value={subtitle}
+                onChange={(event) => setSubtitle(event.target.value)}
+                placeholder="例如：习作启蒙"
+              />
             </label>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 240px", gap: 10, marginBottom: 10 }}>
@@ -134,7 +151,13 @@ export function TracksClient({
             </label>
             <label style={{ fontSize: 11, color: "var(--ink-3)" }}>
               slug
-              <input className="tz-input" value={slug} onChange={(event) => setSlug(suggestSlug(event.target.value))} placeholder="qitian-chengzhang" />
+              <input
+                data-testid="track-slug-input"
+                className="tz-input"
+                value={slug}
+                onChange={(event) => setSlug(suggestSlug(event.target.value))}
+                placeholder="qitian-chengzhang"
+              />
             </label>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
@@ -143,7 +166,13 @@ export function TracksClient({
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button className="tz-btn" type="button" onClick={() => setShowCreate(false)} disabled={busy}>取消</button>
-              <button className="tz-btn tz-btn-primary" type="button" onClick={handleCreate} disabled={busy || createDisabled}>
+              <button
+                data-testid="track-create-submit"
+                className="tz-btn tz-btn-primary"
+                type="button"
+                onClick={handleCreate}
+                disabled={busy || createDisabled}
+              >
                 {busy ? "创建中…" : "创建课程"}
               </button>
             </div>

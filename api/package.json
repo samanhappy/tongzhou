@@ -8,7 +8,10 @@
     "start": "node --import tsx src/index.ts",
     "seed": "tsx src/db/seed.ts",
     "typecheck": "tsc --noEmit",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:pg": "vitest run --project postgres"
   },
   "dependencies": {
     "@fastify/cookie": "11.0.2",
@@ -27,6 +30,7 @@
     "@types/node": "22.10.7",
     "@types/pg": "8.20.0",
     "tsx": "4.19.2",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "vitest": "3.2.4"
   }
 }

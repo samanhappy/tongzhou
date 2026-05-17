@@ -123,6 +123,7 @@ export function AuthEntry({
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.04em" }}>邮箱</span>
               <input
+                data-testid="auth-email"
                 className="tz-input"
                 type="email"
                 value={email}
@@ -136,6 +137,7 @@ export function AuthEntry({
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.04em" }}>密码</span>
               <input
+                data-testid="auth-password"
                 className="tz-input"
                 type="password"
                 value={password}
@@ -153,6 +155,7 @@ export function AuthEntry({
                     创作者名 / 空间名
                   </span>
                   <input
+                    data-testid="auth-name"
                     className="tz-input"
                     value={name}
                     onChange={(event) => {
@@ -169,6 +172,7 @@ export function AuthEntry({
                   <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: "0.04em" }}>空间 slug</span>
                   <div style={{ display: "flex", alignItems: "stretch" }}>
                     <input
+                      data-testid="auth-slug"
                       className="tz-input"
                       value={slug}
                       onChange={(event) => {
@@ -215,6 +219,7 @@ export function AuthEntry({
             )}
 
             <button
+              data-testid="auth-submit"
               type="submit"
               className="tz-btn tz-btn-primary"
               disabled={pending}

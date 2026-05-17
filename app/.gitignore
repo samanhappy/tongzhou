@@ -5,3 +5,5 @@ node_modules
 *.log
 .turbo
 out
+playwright-report
+test-results
