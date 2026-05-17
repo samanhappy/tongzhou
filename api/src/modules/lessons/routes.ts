@@ -5,14 +5,13 @@ import * as repo from "./repo.js";
 import * as tracks from "../tracks/repo.js";
 
 export async function registerLessonRoutes(app: FastifyInstance) {
-  // 列出 track 下所有课时（也可以直接通过 GET /api/tracks/:id 拿到）
   app.get<{ Params: { trackId: string } }>(
     "/api/tracks/:trackId/lessons",
     async (req) => {
       const t = requireTenant(req);
-      const track = tracks.getById(t.id, req.params.trackId);
+      const track = await tracks.getById(t.id, req.params.trackId);
       if (!track) throw new HttpError(404, "track not found");
-      return { lessons: repo.listByTrack(t.id, track.id) };
+      return { lessons: await repo.listByTrack(t.id, track.id) };
     },
   );
 
@@ -27,16 +26,16 @@ export async function registerLessonRoutes(app: FastifyInstance) {
     };
   }>("/api/tracks/:trackId/lessons", async (req) => {
     const t = requireTenant(req);
-    const track = tracks.getById(t.id, req.params.trackId);
+    const track = await tracks.getById(t.id, req.params.trackId);
     if (!track) throw new HttpError(404, "track not found");
     if (!req.body?.title) throw new HttpError(400, "title required");
 
-    const existing = repo.listByTrack(t.id, track.id);
-    const lesson = repo.create(t.id, track.id, {
+    const existing = await repo.listByTrack(t.id, track.id);
+    const lesson = await repo.create(t.id, track.id, {
       ...req.body,
       position: existing.length,
     });
-    tracks.recomputeStats(t.id, track.id);
+    await tracks.recomputeStats(t.id, track.id);
     return { lesson };
   });
 
@@ -52,7 +51,7 @@ export async function registerLessonRoutes(app: FastifyInstance) {
     }>;
   }>("/api/lessons/:id", async (req) => {
     const t = requireTenant(req);
-    const lesson = repo.update(t.id, req.params.id, {
+    const lesson = await repo.update(t.id, req.params.id, {
       title: req.body?.title,
       summary: req.body?.summary,
       status: req.body?.status,
@@ -61,31 +60,30 @@ export async function registerLessonRoutes(app: FastifyInstance) {
       progress: req.body?.progress,
     });
     if (!lesson) throw new HttpError(404, "lesson not found");
-    tracks.recomputeStats(t.id, lesson.track_id);
+    await tracks.recomputeStats(t.id, lesson.track_id);
     return { lesson };
   });
 
   app.delete<{ Params: { id: string } }>("/api/lessons/:id", async (req) => {
     const t = requireTenant(req);
-    const lesson = repo.getById(t.id, req.params.id);
+    const lesson = await repo.getById(t.id, req.params.id);
     if (!lesson) throw new HttpError(404, "lesson not found");
-    repo.remove(t.id, req.params.id);
-    tracks.recomputeStats(t.id, lesson.track_id);
+    await repo.remove(t.id, req.params.id);
+    await tracks.recomputeStats(t.id, lesson.track_id);
     return { ok: true };
   });
 
-  // 拖拽排序
   app.post<{
     Params: { trackId: string };
     Body: { orderedIds: string[] };
   }>("/api/tracks/:trackId/lessons/reorder", async (req) => {
     const t = requireTenant(req);
-    const track = tracks.getById(t.id, req.params.trackId);
+    const track = await tracks.getById(t.id, req.params.trackId);
     if (!track) throw new HttpError(404, "track not found");
     if (!Array.isArray(req.body?.orderedIds)) {
       throw new HttpError(400, "orderedIds: string[] required");
     }
-    repo.reorder(t.id, track.id, req.body.orderedIds);
-    return { ok: true, lessons: repo.listByTrack(t.id, track.id) };
+    await repo.reorder(t.id, track.id, req.body.orderedIds);
+    return { ok: true, lessons: await repo.listByTrack(t.id, track.id) };
   });
 }

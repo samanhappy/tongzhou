@@ -1,7 +1,9 @@
 // 学员侧 / 公开接口（不需要创作者身份）
 // 路径前缀：/api/x/:slug
 //
-// V0.5 起加 OAuth2 (公众号 openid) 与 anonToken 合并。
+// 注意 PG/RLS 路径：这些路由不在创作者 tenant 上下文里,
+// 但仍需访问 tenant 数据,因此 middleware/tenant.ts 会基于 URL 的 :slug 设置
+// app.tenant_id,确保 RLS 通过。
 
 import type { FastifyInstance } from "fastify";
 import { getDb } from "../../db/index.js";
@@ -12,28 +14,28 @@ import * as lessonsRepo from "../lessons/repo.js";
 
 export async function registerPublicRoutes(app: FastifyInstance) {
   app.get<{ Params: { slug: string } }>("/api/x/:slug", async (req, reply) => {
-    const t = getBySlug(req.params.slug);
+    const t = await getBySlug(req.params.slug);
     if (!t) return reply.code(404).send({ error: "tenant not found" });
 
-    const tracks = tracksRepo.listByTenant(t.id).filter((x) => x.status === "published");
-    const track = tracks[0]; // V0 只有 1 门课
+    const all = await tracksRepo.listByTenant(t.id);
+    const tracks = all.filter((x) => x.status === "published");
+    const track = tracks[0];
     if (!track) return { tenant: t, track: null, lessons: [] };
-    const lessons = lessonsRepo.listByTrack(t.id, track.id);
+    const lessons = await lessonsRepo.listByTrack(t.id, track.id);
     return { tenant: t, track, lessons };
   });
 
   app.get<{ Params: { slug: string; lessonId: string } }>(
     "/api/x/:slug/lessons/:lessonId",
     async (req, reply) => {
-      const t = getBySlug(req.params.slug);
+      const t = await getBySlug(req.params.slug);
       if (!t) return reply.code(404).send({ error: "tenant not found" });
-      const lesson = lessonsRepo.getById(t.id, req.params.lessonId);
+      const lesson = await lessonsRepo.getById(t.id, req.params.lessonId);
       if (!lesson) return reply.code(404).send({ error: "lesson not found" });
       return { tenant: t, lesson };
     },
   );
 
-  // 学员观看进度上报（与心跳合一）
   app.post<{
     Params: { slug: string };
     Body: {
@@ -44,7 +46,7 @@ export async function registerPublicRoutes(app: FastifyInstance) {
       memberId?: string;
     };
   }>("/api/x/:slug/progress", async (req, reply) => {
-    const t = getBySlug(req.params.slug);
+    const t = await getBySlug(req.params.slug);
     if (!t) return reply.code(404).send({ error: "tenant not found" });
     const { lessonId, watchedSec, completed, anonToken, memberId } = req.body ?? ({} as never);
     if (!lessonId) return reply.code(400).send({ error: "lessonId required" });
@@ -52,15 +54,14 @@ export async function registerPublicRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "anonToken or memberId required" });
     }
     const db = getDb();
-    // 找现有记录
     const existing = anonToken
-      ? db
+      ? await db
           .prepare(
             `SELECT id FROM lesson_progress
              WHERE tenant_id = ? AND lesson_id = ? AND anon_token = ?`,
           )
           .get<{ id: string }>([t.id, lessonId, anonToken])
-      : db
+      : await db
           .prepare(
             `SELECT id FROM lesson_progress
              WHERE tenant_id = ? AND lesson_id = ? AND member_id = ?`,
@@ -69,26 +70,30 @@ export async function registerPublicRoutes(app: FastifyInstance) {
 
     const sec = Math.max(0, watchedSec | 0);
     if (existing) {
-      db.prepare(
-        `UPDATE lesson_progress
-           SET watched_sec = ?, completed = ?, last_at = ?
-         WHERE id = ?`,
-      ).run([sec, completed ? 1 : 0, Date.now(), existing.id]);
+      await db
+        .prepare(
+          `UPDATE lesson_progress
+             SET watched_sec = ?, completed = ?, last_at = ?
+           WHERE id = ?`,
+        )
+        .run([sec, completed ? 1 : 0, Date.now(), existing.id]);
     } else {
-      db.prepare(
-        `INSERT INTO lesson_progress
-           (id, tenant_id, lesson_id, anon_token, member_id, watched_sec, completed, last_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run([
-        newId("lp"),
-        t.id,
-        lessonId,
-        anonToken ?? null,
-        memberId ?? null,
-        sec,
-        completed ? 1 : 0,
-        Date.now(),
-      ]);
+      await db
+        .prepare(
+          `INSERT INTO lesson_progress
+             (id, tenant_id, lesson_id, anon_token, member_id, watched_sec, completed, last_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run([
+          newId("lp"),
+          t.id,
+          lessonId,
+          anonToken ?? null,
+          memberId ?? null,
+          sec,
+          completed ? 1 : 0,
+          Date.now(),
+        ]);
     }
     return { ok: true };
   });

@@ -3,37 +3,29 @@ import * as repo from "./repo.js";
 import { HttpError } from "../../middleware/error.js";
 
 export async function registerTenantRoutes(app: FastifyInstance) {
-  // 注册（V0 邮箱占位；不做密码）
   app.post<{ Body: { slug: string; name: string; email?: string } }>(
     "/api/tenants",
     async (req) => {
       const { slug, name } = req.body ?? {};
       if (!slug || !name) throw new HttpError(400, "slug & name required");
-      if (repo.getBySlug(slug)) throw new HttpError(409, "slug already taken");
-      const t = repo.create({ slug, name });
+      if (await repo.getBySlug(slug)) throw new HttpError(409, "slug already taken");
+      const t = await repo.create({ slug, name });
       return { tenant: t };
     },
   );
 
-  // 当前 Tenant 完整记录（前端通过 header 解析,这里返回完整字段）
   app.get("/api/tenants/me", async (req) => {
     if (!req.tenant) throw new HttpError(401, "no tenant context");
-    const full = repo.getById(req.tenant.id);
+    const full = await repo.getById(req.tenant.id);
     if (!full) throw new HttpError(404, "tenant not found");
     return { tenant: full };
   });
 
-  // 更新品牌
   app.patch<{
-    Body: {
-      name?: string;
-      tagline?: string;
-      themeHue?: number;
-      groupLink?: string;
-    };
+    Body: { name?: string; tagline?: string; themeHue?: number; groupLink?: string };
   }>("/api/tenants/me", async (req) => {
     if (!req.tenant) throw new HttpError(401, "no tenant context");
-    const t = repo.update(req.tenant.id, {
+    const t = await repo.update(req.tenant.id, {
       name: req.body?.name,
       tagline: req.body?.tagline,
       theme_hue: req.body?.themeHue,

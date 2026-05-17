@@ -1,6 +1,5 @@
 // Tenants · Repository
-// 注意：tenants 表本身不带 tenant_id 过滤（它是 tenant 自身）。
-// 其它表的 repo 都必须带 tenant_id where 条件。
+// 注意：tenants 表本身不带 tenant_id 过滤(它是 tenant 自身),也不开启 RLS。
 
 import { getDb } from "../../db/index.js";
 import { newId } from "../../lib/id.js";
@@ -17,30 +16,28 @@ export type Tenant = {
   updated_at: number;
 };
 
-export function getBySlug(slug: string): Tenant | undefined {
-  return getDb()
-    .prepare(`SELECT * FROM tenants WHERE slug = ?`)
-    .get<Tenant>([slug]);
+export async function getBySlug(slug: string): Promise<Tenant | undefined> {
+  return getDb().prepare(`SELECT * FROM tenants WHERE slug = ?`).get<Tenant>([slug]);
 }
 
-export function getById(id: string): Tenant | undefined {
+export async function getById(id: string): Promise<Tenant | undefined> {
   return getDb().prepare(`SELECT * FROM tenants WHERE id = ?`).get<Tenant>([id]);
 }
 
-export function listAll(): Tenant[] {
+export async function listAll(): Promise<Tenant[]> {
   return getDb().prepare(`SELECT * FROM tenants ORDER BY created_at DESC`).all<Tenant>();
 }
 
-export function create(input: {
+export async function create(input: {
   slug: string;
   name: string;
   tagline?: string;
   themeHue?: number;
   groupLink?: string;
-}): Tenant {
+}): Promise<Tenant> {
   const now = Date.now();
   const id = newId("ten");
-  getDb()
+  await getDb()
     .prepare(
       `INSERT INTO tenants (id, slug, name, tagline, theme_hue, group_link, plan, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, 'free', ?, ?)`,
@@ -55,13 +52,13 @@ export function create(input: {
       now,
       now,
     ]);
-  return getById(id)!;
+  return (await getById(id))!;
 }
 
-export function update(
+export async function update(
   id: string,
   patch: Partial<Pick<Tenant, "name" | "tagline" | "theme_hue" | "group_link" | "plan">>,
-): Tenant | undefined {
+): Promise<Tenant | undefined> {
   const fields: string[] = [];
   const values: (string | number)[] = [];
   for (const [k, v] of Object.entries(patch)) {
@@ -73,7 +70,7 @@ export function update(
   fields.push("updated_at = ?");
   values.push(Date.now());
   values.push(id);
-  getDb()
+  await getDb()
     .prepare(`UPDATE tenants SET ${fields.join(", ")} WHERE id = ?`)
     .run(values);
   return getById(id);

@@ -1,11 +1,8 @@
 // Usage · 计量聚合
 // roadmap/07-V0范围与计量模型.md §4.1 + §4.2
 //
-// 4 个 metric_key（与前端 lib/mock.ts 对齐）：
-//   members.active_count  — 当月去重活跃学员
-//   courses.count         — published 课程数
-//   storage.bytes         — 视频存储 GB·月
-//   playback.minutes      — 当月播放分钟累计
+// 4 个 metric_key：
+//   members.active_count  / courses.count / storage.bytes / playback.minutes
 
 import { getDb } from "../../db/index.js";
 import { newId } from "../../lib/id.js";
@@ -56,15 +53,15 @@ const METRIC_META: Record<MetricKey, { name: string; sub: string; sample: string
   },
 };
 
-export function recordEvent(input: {
+export async function recordEvent(input: {
   tenantId: string;
   metricKey: MetricKey;
   delta: number;
   refKind?: string;
   refId?: string;
   meta?: unknown;
-}) {
-  getDb()
+}): Promise<void> {
+  await getDb()
     .prepare(
       `INSERT INTO usage_events
         (id, tenant_id, metric_key, delta, ref_kind, ref_id, occurred_at, meta)
@@ -82,18 +79,15 @@ export function recordEvent(input: {
     ]);
 }
 
-/** 把事件流 → 月聚合（幂等，可重算） */
-export function recomputeMonth(tenantId: string, period?: string) {
+export async function recomputeMonth(tenantId: string, period?: string): Promise<void> {
   const p = period ?? currentPeriod();
   const { start, end } = periodRange(p);
   const db = getDb();
-  db.transaction(() => {
-    // 4 个 metric 各算一次
+  await db.transaction(async () => {
     for (const key of Object.keys(METRIC_META) as MetricKey[]) {
       let value = 0;
       if (key === "members.active_count") {
-        // 月内 distinct
-        const row = db
+        const row = await db
           .prepare(
             `SELECT COUNT(DISTINCT COALESCE(member_id, anon_token)) AS n
              FROM lesson_progress WHERE tenant_id = ? AND last_at >= ? AND last_at < ?`,
@@ -101,18 +95,17 @@ export function recomputeMonth(tenantId: string, period?: string) {
           .get<{ n: number }>([tenantId, start, end]);
         value = row?.n ?? 0;
       } else if (key === "courses.count") {
-        const row = db
+        const row = await db
           .prepare(`SELECT COUNT(*) AS n FROM tracks WHERE tenant_id = ? AND status = 'published'`)
           .get<{ n: number }>([tenantId]);
         value = row?.n ?? 0;
       } else if (key === "storage.bytes") {
-        const row = db
+        const row = await db
           .prepare(`SELECT COALESCE(SUM(size_bytes), 0) AS n FROM uploads WHERE tenant_id = ?`)
           .get<{ n: number }>([tenantId]);
-        // 换成 GB
         value = Number(((row?.n ?? 0) / 1024 / 1024 / 1024).toFixed(2));
       } else if (key === "playback.minutes") {
-        const row = db
+        const row = await db
           .prepare(
             `SELECT COALESCE(SUM(delta), 0) AS n FROM usage_events
              WHERE tenant_id = ? AND metric_key = 'playback.minutes'
@@ -121,19 +114,26 @@ export function recomputeMonth(tenantId: string, period?: string) {
           .get<{ n: number }>([tenantId, start, end]);
         value = Math.round(row?.n ?? 0);
       }
-      upsertMeter(tenantId, key, p, value);
+      await upsertMeter(tenantId, key, p, value);
     }
   });
 }
 
-function upsertMeter(tenantId: string, key: MetricKey, period: string, value: number) {
+async function upsertMeter(
+  tenantId: string,
+  key: MetricKey,
+  period: string,
+  value: number,
+): Promise<void> {
   const q = DEFAULT_QUOTAS[key];
-  getDb()
+  const db = getDb();
+  // SQLite 与 PG 都支持 ON CONFLICT...DO UPDATE
+  await db
     .prepare(
       `INSERT INTO usage_meters
          (id, tenant_id, metric_key, period, current_value, free_quota, unit, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(tenant_id, metric_key, period) DO UPDATE SET
+       ON CONFLICT (tenant_id, metric_key, period) DO UPDATE SET
          current_value = excluded.current_value,
          free_quota    = excluded.free_quota,
          unit          = excluded.unit,
@@ -142,10 +142,10 @@ function upsertMeter(tenantId: string, key: MetricKey, period: string, value: nu
     .run([newId("um"), tenantId, key, period, value, q.max, q.unit, Date.now()]);
 }
 
-export function readMeters(tenantId: string, period?: string): MeterRow[] {
-  recomputeMonth(tenantId, period);
+export async function readMeters(tenantId: string, period?: string): Promise<MeterRow[]> {
+  await recomputeMonth(tenantId, period);
   const p = period ?? currentPeriod();
-  const rows = getDb()
+  const rows = await getDb()
     .prepare(
       `SELECT metric_key, current_value, free_quota, unit
        FROM usage_meters WHERE tenant_id = ? AND period = ?`,

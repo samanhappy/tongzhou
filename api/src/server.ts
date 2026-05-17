@@ -1,9 +1,4 @@
 // 同舟 · Fastify 服务器装配
-//
-// 启动顺序：
-//   1. 初始化 adapters（DB / Cache / Storage） — 出错直接终止
-//   2. 注册公共中间件（CORS, multipart, 静态文件, error handler, tenant hook）
-//   3. 注册各模块路由
 
 import fastifyCors from "@fastify/cors";
 import fastifyMultipart from "@fastify/multipart";
@@ -11,9 +6,10 @@ import fastify, { type FastifyInstance } from "fastify";
 import path from "node:path";
 import fs from "node:fs";
 import { config } from "./env.js";
-import { initDb } from "./db/index.js";
-import { initCache } from "./cache/index.js";
-import { initStorage } from "./storage/index.js";
+import { getDb, initDb } from "./db/index.js";
+import { getCache, initCache } from "./cache/index.js";
+import { getStorage, initStorage } from "./storage/index.js";
+import { getVideo, initVideo } from "./video/index.js";
 import { registerErrorHandler } from "./middleware/error.js";
 import { registerTenantHook } from "./middleware/tenant.js";
 import { registerTenantRoutes } from "./modules/tenants/routes.js";
@@ -28,10 +24,11 @@ export async function buildServer(): Promise<FastifyInstance> {
   await initDb();
   await initCache();
   await initStorage();
+  await initVideo();
 
   const app = fastify({
     logger: { level: config.logLevel },
-    bodyLimit: 50 * 1024 * 1024, // 50 MB for non-multipart bodies
+    bodyLimit: 50 * 1024 * 1024,
   });
 
   await app.register(fastifyCors, {
@@ -46,18 +43,18 @@ export async function buildServer(): Promise<FastifyInstance> {
   registerErrorHandler(app);
   registerTenantHook(app);
 
-  // 健康检查
   app.get("/api/healthz", async () => ({
     ok: true,
     drivers: {
-      db: (await import("./db/index.js")).getDb().driver,
-      cache: (await import("./cache/index.js")).getCache().driver,
-      storage: (await import("./storage/index.js")).getStorage().driver,
+      db: getDb().driver,
+      cache: getCache().driver,
+      storage: getStorage().driver,
+      video: getVideo().driver,
     },
     time: new Date().toISOString(),
   }));
 
-  // 本地存储的静态文件路由（Storage.driver=local 时）
+  // 本地存储静态路由(STORAGE_DRIVER=local 时)
   if (config.storage.driver === "local") {
     app.get<{ Params: { "*": string } }>("/files/*", async (req, reply) => {
       const rel = req.params["*"];
@@ -71,7 +68,6 @@ export async function buildServer(): Promise<FastifyInstance> {
     });
   }
 
-  // 各模块
   await registerTenantRoutes(app);
   await registerTrackRoutes(app);
   await registerLessonRoutes(app);

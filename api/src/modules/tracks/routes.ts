@@ -7,15 +7,16 @@ import * as lessons from "../lessons/repo.js";
 export async function registerTrackRoutes(app: FastifyInstance) {
   app.get("/api/tracks", async (req) => {
     const t = requireTenant(req);
-    const list = repo.listByTenant(t.id);
-    return { tracks: list };
+    return { tracks: await repo.listByTenant(t.id) };
   });
 
   app.get<{ Params: { id: string } }>("/api/tracks/:id", async (req) => {
     const t = requireTenant(req);
-    const track = repo.getById(t.id, req.params.id) ?? repo.getBySlug(t.id, req.params.id);
+    const track =
+      (await repo.getById(t.id, req.params.id)) ??
+      (await repo.getBySlug(t.id, req.params.id));
     if (!track) throw new HttpError(404, "track not found");
-    const ls = lessons.listByTrack(t.id, track.id);
+    const ls = await lessons.listByTrack(t.id, track.id);
     return { track, lessons: ls };
   });
 
@@ -25,8 +26,8 @@ export async function registerTrackRoutes(app: FastifyInstance) {
       const t = requireTenant(req);
       const { slug, title } = req.body ?? {};
       if (!slug || !title) throw new HttpError(400, "slug & title required");
-      if (repo.getBySlug(t.id, slug)) throw new HttpError(409, "slug exists");
-      return { track: repo.create(t.id, req.body!) };
+      if (await repo.getBySlug(t.id, slug)) throw new HttpError(409, "slug exists");
+      return { track: await repo.create(t.id, req.body!) };
     },
   );
 
@@ -40,7 +41,7 @@ export async function registerTrackRoutes(app: FastifyInstance) {
     }>;
   }>("/api/tracks/:id", async (req) => {
     const t = requireTenant(req);
-    const track = repo.update(t.id, req.params.id, {
+    const track = await repo.update(t.id, req.params.id, {
       title: req.body?.title,
       subtitle: req.body?.subtitle,
       one_line: req.body?.oneLine,

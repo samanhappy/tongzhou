@@ -19,19 +19,19 @@ export type Member = {
   updated_at: number;
 };
 
-export function listByTenant(tenantId: string): Member[] {
+export async function listByTenant(tenantId: string): Promise<Member[]> {
   return getDb()
     .prepare(`SELECT * FROM members WHERE tenant_id = ? ORDER BY created_at DESC`)
     .all<Member>([tenantId]);
 }
 
-export function getById(tenantId: string, id: string): Member | undefined {
+export async function getById(tenantId: string, id: string): Promise<Member | undefined> {
   return getDb()
     .prepare(`SELECT * FROM members WHERE tenant_id = ? AND id = ?`)
     .get<Member>([tenantId, id]);
 }
 
-export function create(
+export async function create(
   tenantId: string,
   input: {
     name?: string;
@@ -41,10 +41,10 @@ export function create(
     anonymous?: boolean;
     joinedAt?: string;
   },
-): Member {
+): Promise<Member> {
   const now = Date.now();
   const id = newId("mem");
-  getDb()
+  await getDb()
     .prepare(
       `INSERT INTO members
         (id, tenant_id, name, phone, source, bound, anonymous,
@@ -63,13 +63,12 @@ export function create(
       now,
       now,
     ]);
-  return getById(tenantId, id)!;
+  return (await getById(tenantId, id))!;
 }
 
-export function countActiveThisMonth(tenantId: string): number {
-  // MVP：用 last_active 字符串不可靠，改用 lesson_progress.last_at 在本月内的 distinct 学员
+export async function countActiveThisMonth(tenantId: string): Promise<number> {
   const monthStart = startOfMonth();
-  const row = getDb()
+  const row = await getDb()
     .prepare(
       `SELECT COUNT(DISTINCT COALESCE(member_id, anon_token)) AS n
        FROM lesson_progress

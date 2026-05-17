@@ -1,8 +1,13 @@
 // 同舟 · 演示数据 seed
 // 与 app/lib/mock.ts 对齐 — 醒春阁 + 七天成长计划。
 // 重复执行幂等：先按 slug 看是否已存在。
+//
+// PG 模式：脚本运行没有 request scope,所以全程走 default pool
+// → 对 RLS 表的写入需要先 SET app.tenant_id。
+// 为保持脚本简单,推荐用 SUPERUSER 账户跑 seed(超管不受 RLS 限制)。
+// 或者：写完后用 set_config 手动测试 RLS 是否生效。
 
-import { initDb } from "./index.js";
+import { initDb, getDb, requestScope } from "./index.js";
 import * as tenantsRepo from "../modules/tenants/repo.js";
 import * as tracksRepo from "../modules/tracks/repo.js";
 import * as lessonsRepo from "../modules/lessons/repo.js";
@@ -59,28 +64,43 @@ const MEMBERS = [
 
 async function main() {
   await initDb();
+  const db = getDb();
 
-  let tenant = tenantsRepo.getBySlug(TENANT.slug);
+  let tenant = await tenantsRepo.getBySlug(TENANT.slug);
   if (!tenant) {
-    tenant = tenantsRepo.create(TENANT);
+    tenant = await tenantsRepo.create(TENANT);
     console.log(`[seed] tenant created: ${tenant.slug} (${tenant.id})`);
   } else {
     console.log(`[seed] tenant exists: ${tenant.slug}`);
   }
 
-  let track = tracksRepo.getBySlug(tenant.id, TRACK.slug);
+  // PG 模式下,后续所有插入都涉及 RLS 表 → 给当前会话挂上 app.tenant_id
+  if (db.driver === "postgres") {
+    // 用 ALS 包一段,模拟 request scope；这里只是设个 GUC,不开 BEGIN
+    // (脚本应当用 SUPERUSER 跑,绕过 RLS；如果非 SUPERUSER 则需要此设置)
+    await db.exec(`SELECT set_config('app.tenant_id', '${tenant.id}', false)`);
+    console.log(`[seed] PG: app.tenant_id set to ${tenant.id}`);
+  }
+
+  await seedContent(tenant.id);
+  console.log(`[seed] done.`);
+}
+
+async function seedContent(tenantId: string) {
+  let track = await tracksRepo.getBySlug(tenantId, TRACK.slug);
   if (!track) {
-    track = tracksRepo.create(tenant.id, TRACK);
-    tracksRepo.update(tenant.id, track.id, { status: "published" });
+    track = await tracksRepo.create(tenantId, TRACK);
+    await tracksRepo.update(tenantId, track.id, { status: "published" });
     console.log(`[seed] track created: ${track.slug}`);
   } else {
     console.log(`[seed] track exists: ${track.slug}`);
   }
 
-  const existing = lessonsRepo.listByTrack(tenant.id, track.id);
+  const existing = await lessonsRepo.listByTrack(tenantId, track.id);
   if (!existing.length) {
-    LESSONS.forEach((l, i) => {
-      lessonsRepo.create(tenant!.id, track!.id, {
+    for (let i = 0; i < LESSONS.length; i++) {
+      const l = LESSONS[i]!;
+      const lesson = await lessonsRepo.create(tenantId, track.id, {
         title: l.title,
         summary: l.summary,
         position: i,
@@ -88,56 +108,53 @@ async function main() {
         durationText: l.durationText,
         status: l.status,
       });
-      // 已发布课时塞一个假 upload 让 storage.bytes 不为 0
+      if (l.views) await lessonsRepo.update(tenantId, lesson.id, { views: l.views });
+
       if (l.status === "published" && l.durationSec) {
-        uploadsRepo.create(tenant!.id, {
+        await uploadsRepo.create(tenantId, {
           filename: `${l.title}.mp4`,
           mime: "video/mp4",
-          // 320 MB 平均
           sizeBytes: 320 * 1024 * 1024,
           storageDriver: "local",
-          storageKey: `videos/${tenant!.id}/seed-${i}.mp4`,
-          url: `http://localhost:4100/files/videos/${tenant!.id}/seed-${i}.mp4`,
+          storageKey: `videos/${tenantId}/seed-${i}.mp4`,
+          url: `http://localhost:4100/files/videos/${tenantId}/seed-${i}.mp4`,
         });
       }
-    });
-    // 写回 views（mock 演示用）
-    lessonsRepo.listByTrack(tenant.id, track.id).forEach((row, i) => {
-      const src = LESSONS[i];
-      if (src?.views) lessonsRepo.update(tenant!.id, row.id, { views: src.views });
-    });
-    tracksRepo.recomputeStats(tenant.id, track.id);
+    }
+    await tracksRepo.recomputeStats(tenantId, track.id);
     console.log(`[seed] lessons created: ${LESSONS.length}`);
   } else {
     console.log(`[seed] lessons exist: ${existing.length}`);
   }
 
-  // 演示用 completion_rate（mock 演示一致）
-  tracksRepo.update(tenant.id, track.id, { position: 0 });
-
-  const mCount = membersRepo.listByTenant(tenant.id).length;
+  const mCount = (await membersRepo.listByTenant(tenantId)).length;
   if (mCount === 0) {
-    for (const m of MEMBERS) membersRepo.create(tenant.id, m);
+    for (const m of MEMBERS) await membersRepo.create(tenantId, m);
     console.log(`[seed] members created: ${MEMBERS.length}`);
   } else {
     console.log(`[seed] members exist: ${mCount}`);
   }
 
-  // 给 playback.minutes 注入一些事件，让用量看板有数
-  // 累计 1284 分钟 = mock 中显示的值
-  usageRepo.recordEvent({
-    tenantId: tenant.id,
+  await usageRepo.recordEvent({
+    tenantId,
     metricKey: "playback.minutes",
     delta: 1284,
     refKind: "snapshot",
     meta: { reason: "seed-backfill" },
   });
-  usageRepo.recomputeMonth(tenant.id);
-
-  console.log(`[seed] done.`);
+  await usageRepo.recomputeMonth(tenantId);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main()
+  .then(async () => {
+    const db = getDb();
+    await db.close();
+    process.exit(0);
+  })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+
+// Suppress unused warning - exported for future API
+void requestScope;

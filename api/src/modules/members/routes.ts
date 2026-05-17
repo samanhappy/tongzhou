@@ -6,8 +6,11 @@ import * as repo from "./repo.js";
 export async function registerMemberRoutes(app: FastifyInstance) {
   app.get("/api/members", async (req) => {
     const t = requireTenant(req);
-    const list = repo.listByTenant(t.id);
-    return { members: list, activeCount: repo.countActiveThisMonth(t.id) };
+    const [list, activeCount] = await Promise.all([
+      repo.listByTenant(t.id),
+      repo.countActiveThisMonth(t.id),
+    ]);
+    return { members: list, activeCount };
   });
 
   app.post<{
@@ -18,7 +21,7 @@ export async function registerMemberRoutes(app: FastifyInstance) {
       throw new HttpError(400, "name or phone required");
     }
     return {
-      member: repo.create(t.id, {
+      member: await repo.create(t.id, {
         ...req.body,
         bound: !!req.body?.phone && req.body.phone !== "—",
         joinedAt: shortDate(),
@@ -26,7 +29,6 @@ export async function registerMemberRoutes(app: FastifyInstance) {
     };
   });
 
-  // CSV 导入：一行 name,phone（最简）
   app.post<{ Body: { csv: string; source?: string } }>(
     "/api/members/import-csv",
     async (req) => {
@@ -40,7 +42,7 @@ export async function registerMemberRoutes(app: FastifyInstance) {
         if (!line || line.startsWith("#")) continue;
         const [name, phone] = line.split(",").map((s) => s?.trim());
         if (!name && !phone) continue;
-        repo.create(t.id, {
+        await repo.create(t.id, {
           name: name || "—",
           phone: phone || "—",
           source,

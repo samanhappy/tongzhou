@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// 极简的 .env.local / .env 加载（不引入 dotenv，避免依赖）
+// 极简的 .env.local / .env 加载（不引入 dotenv）
 function loadDotEnv() {
   for (const name of [".env.local", ".env"]) {
     const p = path.resolve(process.cwd(), name);
@@ -42,9 +42,18 @@ function num(name: string, fallback: number): number {
   return n;
 }
 
+function optNum(name: string): number | undefined {
+  const v = process.env[name];
+  if (!v) return undefined;
+  const n = Number(v);
+  if (Number.isNaN(n)) throw new Error(`[env] ${name} not a number: ${v}`);
+  return n;
+}
+
 export type DbDriver = "sqlite" | "postgres";
 export type CacheDriver = "memory" | "redis";
 export type StorageDriver = "local" | "tencent-cos";
+export type VideoDriver = "local" | "tencent-vod";
 
 export const config = {
   port: num("PORT", 4100),
@@ -72,6 +81,17 @@ export const config = {
       bucket: process.env.COS_BUCKET,
       region: process.env.COS_REGION,
       cdnDomain: process.env.COS_CDN_DOMAIN,
+    },
+  },
+
+  video: {
+    driver: need("VIDEO_DRIVER", "local") as VideoDriver,
+    vod: {
+      secretId: process.env.VOD_SECRET_ID,
+      secretKey: process.env.VOD_SECRET_KEY,
+      region: process.env.VOD_REGION,
+      subAppId: optNum("VOD_SUB_APP_ID"),
+      playKey: process.env.VOD_PLAY_KEY,
     },
   },
 } as const;

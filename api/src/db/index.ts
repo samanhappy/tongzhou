@@ -2,41 +2,65 @@
 //
 // 设计意图：
 // - 业务代码只依赖 `Db` 接口，不依赖具体存储
-// - SQLite 是 MVP 实现；Postgres 在 ./postgres.ts 留口
-// - 接口故意保持窄面：只暴露 prepare/exec/transaction，避免被某个驱动绑死
+// - SQLite 是 MVP 默认；Postgres 支持 RLS 防御层
+// - 占位符统一用 `?`,PG 适配器内部转 $N
+// - 事务接口为 async,SQLite 内部同步桥接
 //
-// 多租户合规：业务代码必须经由 modules/*/repo.ts 调用，
-// repo 强制在 SQL where 中带 tenant_id，并由 middleware/tenant.ts 注入。
+// 多租户合规两道防线：
+//   ① 应用层：repo SQL 必带 tenant_id where（已落实）
+//   ② 数据层：PG 模式启用 RLS,USING (tenant_id = current_setting('app.tenant_id')::uuid)
+//      每请求 BEGIN + SET LOCAL,onResponse COMMIT/ROLLBACK
+//
+// 任一层失守,另一层兜底。
 
-export type SqlValue = string | number | bigint | Buffer | null;
+export type SqlValue = string | number | bigint | Buffer | null | boolean;
 
 export type DbRow = Record<string, SqlValue>;
 
 export interface PreparedStatement {
-  /** 执行 INSERT / UPDATE / DELETE，返回受影响行数。 */
-  run(params?: SqlValue[] | Record<string, SqlValue>): { changes: number; lastInsertRowid?: bigint | number };
-  /** 取第一行。 */
-  get<T = DbRow>(params?: SqlValue[] | Record<string, SqlValue>): T | undefined;
-  /** 取所有行。 */
-  all<T = DbRow>(params?: SqlValue[] | Record<string, SqlValue>): T[];
+  run(params?: SqlValue[]): Promise<{ changes: number }>;
+  get<T = DbRow>(params?: SqlValue[]): Promise<T | undefined>;
+  all<T = DbRow>(params?: SqlValue[]): Promise<T[]>;
 }
 
 export interface Db {
-  /** 准备一条 SQL 语句。占位符随驱动有 `?` 或 `$1`，业务层只用 `?`。 */
+  driver: "sqlite" | "postgres";
   prepare(sql: string): PreparedStatement;
-  /** 直接执行（DDL / 多语句）。 */
-  exec(sql: string): void;
-  /** 事务。回调里同步运行；如要异步，请用 `transactionAsync`。 */
-  transaction<T>(fn: () => T): T;
-  /** 关闭连接。 */
-  close(): void;
-  /** 驱动名（"sqlite" / "postgres"），调试用。 */
-  driver: string;
+  /** 直接执行 (DDL / 多语句)。 */
+  exec(sql: string): Promise<void>;
+  /** 事务。返回值即 fn 的返回。SQLite 桥接同步实现；PG 用 SAVEPOINT。 */
+  transaction<T>(fn: () => Promise<T>): Promise<T>;
+  close(): Promise<void>;
 }
+
+// ─────────────────────────────────────────────
+// 请求作用域 (per-request connection for PG + RLS)
+// ─────────────────────────────────────────────
+//
+// AsyncLocalStorage 持有当前请求的 PG client 引用。
+// SQLite 不需要 — 共享一个 file handle,无并发竞争。
+// 见 ./postgres.ts startRequestScope / attachClientToScope / endRequestScope。
+
+import { AsyncLocalStorage } from "node:async_hooks";
+
+// 用 unknown 避免循环引用 pg 类型；postgres.ts 自己 cast 回 PoolClient。
+export type RequestScope = {
+  client?: unknown;
+  tenantId?: string;
+};
+
+export const requestScope = new AsyncLocalStorage<RequestScope>();
+
+export function currentScope(): RequestScope | undefined {
+  return requestScope.getStore();
+}
+
+// ─────────────────────────────────────────────
+// 单例
+// ─────────────────────────────────────────────
 
 let _db: Db | null = null;
 
-/** 进程内单例 — 启动时调用 setDb(...)。 */
 export function setDb(db: Db) {
   _db = db;
 }
@@ -46,9 +70,6 @@ export function getDb(): Db {
   return _db;
 }
 
-/**
- * 根据 env 选驱动并初始化。Postgres 仍是 placeholder（参考 ./postgres.ts）。
- */
 export async function initDb(): Promise<Db> {
   const { config } = await import("../env.js");
   if (config.db.driver === "sqlite") {
@@ -59,7 +80,9 @@ export async function initDb(): Promise<Db> {
   }
   if (config.db.driver === "postgres") {
     const { openPostgres } = await import("./postgres.js");
-    const db = openPostgres(config.db.databaseUrl ?? "");
+    const db = await openPostgres({
+      connectionString: config.db.databaseUrl ?? "",
+    });
     setDb(db);
     return db;
   }
