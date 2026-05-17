@@ -14,19 +14,20 @@ export async function registerUsageRoutes(app: FastifyInstance) {
     return { ok: true, meters: await repo.readMeters(t.id) };
   });
 
-  // 学员侧心跳：累加 playback.minutes
+  // 学员侧心跳：累加 playback.minutes(必须已登录学员)
   app.post<{
     Params: { slug: string };
     Body: {
       lessonId: string;
       deltaSec: number;
-      anonToken?: string;
-      memberId?: string;
     };
   }>("/api/x/:slug/heartbeat", async (req, reply) => {
     const { getBySlug } = await import("../tenants/repo.js");
     const t = await getBySlug(req.params.slug);
     if (!t) return reply.code(404).send({ error: "tenant not found" });
+    if (!req.student || req.student.tenantId !== t.id) {
+      return reply.code(401).send({ error: "login_required" });
+    }
 
     const deltaMin = Math.max(0, (req.body?.deltaSec ?? 0) / 60);
     if (deltaMin <= 0) return { ok: true };
@@ -37,7 +38,7 @@ export async function registerUsageRoutes(app: FastifyInstance) {
       delta: deltaMin,
       refKind: "video",
       refId: req.body.lessonId,
-      meta: { anonToken: req.body.anonToken, memberId: req.body.memberId },
+      meta: { memberId: req.student.memberId },
     });
     return { ok: true };
   });

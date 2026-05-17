@@ -11,6 +11,7 @@ import { getDb, initDb } from "./db/index.js";
 import { getCache, initCache } from "./cache/index.js";
 import { getStorage, initStorage } from "./storage/index.js";
 import { getVideo, initVideo } from "./video/index.js";
+import { getWechat, initWechat } from "./wechat/index.js";
 import { registerErrorHandler } from "./middleware/error.js";
 import { registerTenantHook } from "./middleware/tenant.js";
 import { registerTenantRoutes } from "./modules/tenants/routes.js";
@@ -21,12 +22,14 @@ import { registerUsageRoutes } from "./modules/usage/routes.js";
 import { registerUploadRoutes } from "./modules/uploads/routes.js";
 import { registerPublicRoutes } from "./modules/public/routes.js";
 import { registerAuthRoutes } from "./modules/auth/routes.js";
+import { registerStudentAuthRoutes } from "./modules/student-auth/routes.js";
 
 export async function buildServer(): Promise<FastifyInstance> {
   await initDb();
   await initCache();
   await initStorage();
   await initVideo();
+  await initWechat();
 
   const app = fastify({
     logger: { level: config.logLevel },
@@ -54,6 +57,7 @@ export async function buildServer(): Promise<FastifyInstance> {
       cache: getCache().driver,
       storage: getStorage().driver,
       video: getVideo().driver,
+      wechat: getWechat().driver,
     },
     time: new Date().toISOString(),
   }));
@@ -81,6 +85,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   await registerUsageRoutes(app);
   await registerUploadRoutes(app);
   await registerPublicRoutes(app);
+  await registerStudentAuthRoutes(app);
 
   return app;
 }

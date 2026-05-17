@@ -10,12 +10,18 @@ import { useCallback, useRef, useState } from "react";
 import { I } from "./icons";
 import { Placeholder, WatermarkLayer } from "./primitives";
 
+type LockState = "login_required" | "not_ready" | "no_video" | null;
+
 type Props = {
   src: string | null;
   mime?: string;
   watermarkText: string;
   posterLabel?: string;
   fallbackDurationText?: string;
+  /** 锁定态(优先于 src):login_required / not_ready / no_video */
+  lockState?: LockState;
+  /** login_required 时点击「微信登录」按钮跳转的 URL */
+  loginHref?: string;
 };
 
 const SPEEDS = [1, 1.25, 1.5, 2];
@@ -26,7 +32,12 @@ export function H5VideoPlayer({
   watermarkText,
   posterLabel = "封面",
   fallbackDurationText,
+  lockState = null,
+  loginHref,
 }: Props) {
+  // 锁定态下完全不渲染 <video>;走 Placeholder + 文案/CTA。
+  const locked = lockState !== null;
+  const effectiveSrc = locked ? null : src;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -90,10 +101,10 @@ export function H5VideoPlayer({
         background: "#000",
       }}
     >
-      {src ? (
+      {effectiveSrc ? (
         <video
           ref={videoRef}
-          src={src}
+          src={effectiveSrc}
           {...(mime ? { "data-mime": mime } : {})}
           playsInline
           preload="metadata"
@@ -119,16 +130,16 @@ export function H5VideoPlayer({
         <Placeholder w="100%" h="100%" radius={0} dark label={posterLabel} />
       )}
 
-      {/* 水印 ——— V0 红线 */}
-      <WatermarkLayer text={watermarkText} />
+      {/* 水印 ——— 仅在能播放时显示 */}
+      {!locked && <WatermarkLayer text={watermarkText} />}
 
-      {/* 中央播放按钮 — 暂停时显示 */}
-      {!playing && !loadError && (
+      {/* 中央播放按钮 — 暂停时显示;锁定态不显示 */}
+      {!locked && !playing && !loadError && (
         <button
           type="button"
           onClick={togglePlay}
           aria-label="播放"
-          disabled={!src}
+          disabled={!effectiveSrc}
           style={{
             position: "absolute",
             inset: 0,
@@ -137,7 +148,7 @@ export function H5VideoPlayer({
             justifyContent: "center",
             background: "transparent",
             border: 0,
-            cursor: src ? "pointer" : "not-allowed",
+            cursor: effectiveSrc ? "pointer" : "not-allowed",
             padding: 0,
           }}
         >
@@ -161,7 +172,7 @@ export function H5VideoPlayer({
       )}
 
       {/* 错误提示 */}
-      {loadError && (
+      {!locked && loadError && (
         <div
           style={{
             position: "absolute",
@@ -180,26 +191,13 @@ export function H5VideoPlayer({
         </div>
       )}
 
-      {/* 没有视频源 */}
-      {!src && !loadError && (
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: "50%",
-            transform: "translateY(-50%)",
-            color: "rgba(255,255,255,0.78)",
-            fontSize: 12,
-            textAlign: "center",
-          }}
-        >
-          视频还未上传或正在转码，请稍后再来
-        </div>
+      {/* 锁定态遮罩 */}
+      {locked && (
+        <LockOverlay state={lockState!} loginHref={loginHref} />
       )}
 
-      {/* 控件条 */}
-      <div
+      {/* 控件条(锁定态隐藏,纯遮罩) */}
+      {!locked && <div
         style={{
           position: "absolute",
           left: 0,
@@ -269,7 +267,7 @@ export function H5VideoPlayer({
             type="button"
             onClick={togglePlay}
             aria-label={playing ? "暂停" : "播放"}
-            disabled={!src}
+            disabled={!effectiveSrc}
             style={iconBtnStyle}
           >
             {playing ? <I.pause size={18} /> : <I.play size={18} />}
@@ -310,28 +308,120 @@ export function H5VideoPlayer({
             <I.fullscr size={16} />
           </button>
         </div>
-      </div>
+      </div>}
 
-      {/* 防盗链角标 */}
+      {/* 防盗链角标(锁定态不显示) */}
+      {!locked && (
+        <div
+          style={{
+            position: "absolute",
+            top: 14,
+            right: 12,
+            background: "rgba(0,0,0,0.6)",
+            color: "rgba(255,255,255,0.8)",
+            padding: "4px 8px",
+            borderRadius: 4,
+            fontSize: 10,
+            fontFamily: "var(--mono)",
+            letterSpacing: "0.05em",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+          }}
+        >
+          <I.clock size={11} /> 6h playAuth
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LockOverlay({
+  state,
+  loginHref,
+}: {
+  state: "login_required" | "not_ready" | "no_video";
+  loginHref?: string;
+}) {
+  if (state === "login_required") {
+    return (
       <div
         style={{
           position: "absolute",
-          top: 14,
-          right: 12,
-          background: "rgba(0,0,0,0.6)",
-          color: "rgba(255,255,255,0.8)",
-          padding: "4px 8px",
-          borderRadius: 4,
-          fontSize: 10,
-          fontFamily: "var(--mono)",
-          letterSpacing: "0.05em",
+          inset: 0,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          gap: 5,
+          justifyContent: "center",
+          color: "#fff",
+          background: "rgba(0,0,0,0.6)",
+          padding: 24,
+          textAlign: "center",
+          gap: 14,
         }}
       >
-        <I.clock size={11} /> 6h playAuth
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 999,
+            background: "rgba(255,255,255,0.12)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+          }}
+          aria-hidden
+        >
+          🔒
+        </div>
+        <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+          登录后可观看
+          <br />
+          <span style={{ opacity: 0.7, fontSize: 11.5 }}>
+            仅老师已开通的学员可看
+          </span>
+        </div>
+        {loginHref ? (
+          <a
+            href={loginHref}
+            style={{
+              padding: "9px 20px",
+              background: "#1AAD19",
+              color: "#fff",
+              borderRadius: 999,
+              fontSize: 12.5,
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
+            微信一键登录
+          </a>
+        ) : null}
       </div>
+    );
+  }
+  const label =
+    state === "not_ready"
+      ? "视频正在转码,请稍后再来"
+      : "本课时暂无视频";
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "rgba(255,255,255,0.82)",
+        background: "rgba(0,0,0,0.45)",
+        fontSize: 12,
+        textAlign: "center",
+        padding: 24,
+      }}
+    >
+      {label}
     </div>
   );
 }

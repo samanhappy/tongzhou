@@ -113,10 +113,39 @@ CREATE TABLE IF NOT EXISTS members (
   last_active         TEXT NOT NULL DEFAULT '',
   course_count        INTEGER NOT NULL DEFAULT 0,
   playback_minutes    INTEGER NOT NULL DEFAULT 0,
+  wechat_openid       TEXT,
+  wechat_unionid      TEXT,
+  wechat_nickname     TEXT,
+  wechat_avatar       TEXT,
+  bound_at            BIGINT,
   created_at          BIGINT NOT NULL,
   updated_at          BIGINT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_members_tenant ON members(tenant_id);
+-- 已存在的库:补列
+ALTER TABLE members ADD COLUMN IF NOT EXISTS wechat_openid TEXT;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS wechat_unionid TEXT;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS wechat_nickname TEXT;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS wechat_avatar TEXT;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS bound_at BIGINT;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_members_openid
+  ON members(tenant_id, wechat_openid) WHERE wechat_openid IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS member_invites (
+  id            TEXT PRIMARY KEY,
+  tenant_id     TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  member_id     TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  token         TEXT NOT NULL,
+  created_by    TEXT,
+  created_at    BIGINT NOT NULL,
+  expires_at    BIGINT NOT NULL,
+  used_at       BIGINT,
+  used_openid   TEXT,
+  revoked_at    BIGINT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_member_invites_token ON member_invites(token);
+CREATE INDEX IF NOT EXISTS idx_member_invites_tenant_member
+  ON member_invites(tenant_id, member_id);
 
 -- ──────────────────────────────────────────────
 -- 4. 计量
@@ -196,7 +225,8 @@ DECLARE
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'users','tracks','lessons','members','uploads',
-    'usage_events','usage_meters','tenant_quotas','lesson_progress'
+    'usage_events','usage_meters','tenant_quotas','lesson_progress',
+    'member_invites'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);

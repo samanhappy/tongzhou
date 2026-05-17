@@ -38,13 +38,16 @@ export async function registerPublicRoutes(app: FastifyInstance) {
     },
   );
 
-  // 学员端播放地址 · MVP 直接返回 uploads.url(local / COS 公开 URL)
+  // 学员端播放地址 · 必须有 req.student(已绑定 openid 的学员)才发签名 URL。
   // V0.5 切到 tencent-vod 后,这里改成 video.getPlayInfo() 返回 playAuth-signed URL
   app.get<{ Params: { slug: string; lessonId: string } }>(
     "/api/x/:slug/lessons/:lessonId/play",
     async (req, reply) => {
       const t = await getBySlug(req.params.slug);
       if (!t) return reply.code(404).send({ error: "tenant not found" });
+      if (!req.student || req.student.tenantId !== t.id) {
+        return reply.code(401).send({ error: "login_required" });
+      }
       const lesson = await lessonsRepo.getById(t.id, req.params.lessonId);
       if (!lesson) return reply.code(404).send({ error: "lesson not found" });
       if (!lesson.video_id) {
@@ -80,32 +83,23 @@ export async function registerPublicRoutes(app: FastifyInstance) {
       lessonId: string;
       watchedSec: number;
       completed?: boolean;
-      anonToken?: string;
-      memberId?: string;
     };
   }>("/api/x/:slug/progress", async (req, reply) => {
     const t = await getBySlug(req.params.slug);
     if (!t) return reply.code(404).send({ error: "tenant not found" });
-    const { lessonId, watchedSec, completed, anonToken, memberId } =
-      req.body ?? ({} as never);
-    if (!lessonId) return reply.code(400).send({ error: "lessonId required" });
-    if (!anonToken && !memberId) {
-      return reply.code(400).send({ error: "anonToken or memberId required" });
+    if (!req.student || req.student.tenantId !== t.id) {
+      return reply.code(401).send({ error: "login_required" });
     }
+    const memberId = req.student.memberId;
+    const { lessonId, watchedSec, completed } = req.body ?? ({} as never);
+    if (!lessonId) return reply.code(400).send({ error: "lessonId required" });
     const db = getDb();
-    const existing = anonToken
-      ? await db
-          .prepare(
-            `SELECT id FROM lesson_progress
-             WHERE tenant_id = ? AND lesson_id = ? AND anon_token = ?`,
-          )
-          .get<{ id: string }>([t.id, lessonId, anonToken])
-      : await db
-          .prepare(
-            `SELECT id FROM lesson_progress
-             WHERE tenant_id = ? AND lesson_id = ? AND member_id = ?`,
-          )
-          .get<{ id: string }>([t.id, lessonId, memberId!]);
+    const existing = await db
+      .prepare(
+        `SELECT id FROM lesson_progress
+         WHERE tenant_id = ? AND lesson_id = ? AND member_id = ?`,
+      )
+      .get<{ id: string }>([t.id, lessonId, memberId]);
 
     const sec = Math.max(0, watchedSec | 0);
     if (existing) {
@@ -121,14 +115,13 @@ export async function registerPublicRoutes(app: FastifyInstance) {
         .prepare(
           `INSERT INTO lesson_progress
              (id, tenant_id, lesson_id, anon_token, member_id, watched_sec, completed, last_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, NULL, ?, ?, ?, ?)`,
         )
         .run([
           newId("lp"),
           t.id,
           lessonId,
-          anonToken ?? null,
-          memberId ?? null,
+          memberId,
           sec,
           completed ? 1 : 0,
           Date.now(),

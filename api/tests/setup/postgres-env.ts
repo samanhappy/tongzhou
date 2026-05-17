@@ -19,6 +19,9 @@ process.env.STORAGE_LOCAL_DIR = path.join(root, "uploads");
 process.env.STORAGE_PUBLIC_BASE =
   process.env.STORAGE_PUBLIC_BASE ?? "http://127.0.0.1:4100/files";
 process.env.VIDEO_DRIVER = "local";
+process.env.WECHAT_DRIVER = "dev";
+process.env.PUBLIC_APP_BASE = "http://127.0.0.1:3000";
+process.env.WECHAT_OAUTH_REDIRECT_BASE = "http://127.0.0.1:3000";
 
 if (process.env.TEST_PG_DATABASE_URL) {
   process.env.DB_DRIVER = "postgres";

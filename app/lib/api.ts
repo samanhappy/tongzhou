@@ -211,23 +211,79 @@ export async function fetchPublicLesson(
   return call(`/api/x/${slug}/lessons/${lessonId}`, { tenantHeader: false });
 }
 
-export type ApiLessonPlay = {
+export type ApiLessonPlayOk = {
   playUrl: string;
   mime: string;
   durationSec: number | null;
   expiresAt: number;
 };
 
+/**
+ * 播放接口的状态机:页面据此决定显示视频 / 登录遮罩 / 未就绪文案 / 无视频文案。
+ *   ok            → 200,合法签名 URL
+ *   login_required → 401,需要学员登录(微信)
+ *   not_ready     → 409,upload phase 还没 ready(转码中)
+ *   no_video      → 404,lesson 没绑 upload,或 upload 找不到
+ *   error         → 其他(网络 / 5xx)
+ */
+export type PlayResult =
+  | ({ kind: "ok" } & ApiLessonPlayOk)
+  | { kind: "login_required" }
+  | { kind: "not_ready" }
+  | { kind: "no_video" }
+  | { kind: "error" };
+
 export async function fetchPublicLessonPlay(
   slug: string,
   lessonId: string,
-): Promise<ApiLessonPlay | null> {
+): Promise<PlayResult> {
+  if (!BASE) return { kind: "error" };
+  try {
+    const cookies = await cookieHeader();
+    const res = await fetch(
+      `${BASE}/api/x/${slug}/lessons/${lessonId}/play`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          ...(cookies ? { cookie: cookies } : {}),
+        },
+        cache: "no-store",
+        credentials: "include",
+      },
+    );
+    if (res.status === 200) {
+      const body = (await res.json()) as ApiLessonPlayOk;
+      return { kind: "ok", ...body };
+    }
+    if (res.status === 401) return { kind: "login_required" };
+    if (res.status === 409) return { kind: "not_ready" };
+    if (res.status === 404) return { kind: "no_video" };
+    return { kind: "error" };
+  } catch {
+    return { kind: "error" };
+  }
+}
+
+export type ApiStudentMember = {
+  id: string;
+  name: string;
+  phone: string;
+  bound: number;
+  wechat_nickname: string | null;
+  wechat_avatar: string | null;
+};
+
+export async function fetchStudentMe(
+  slug: string,
+): Promise<ApiStudentMember | null> {
   if (!BASE) return null;
   try {
-    return await call<ApiLessonPlay>(
-      `/api/x/${slug}/lessons/${lessonId}/play`,
+    const body = await call<{ member: ApiStudentMember }>(
+      `/api/x/${slug}/auth/me`,
       { tenantHeader: false },
     );
+    return body.member;
   } catch {
     return null;
   }

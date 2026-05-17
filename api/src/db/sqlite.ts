@@ -18,10 +18,49 @@ export function openSqlite(filePath: string): Db {
   handle.pragma("journal_mode = WAL");
   handle.pragma("foreign_keys = ON");
 
+  // 顺序:
+  //   1) 老库升级 — 先 ALTER 补列(schema.sql 里有依赖这些列的部分索引,如果先 exec 会失败)
+  //   2) 再跑 schema.sql(CREATE TABLE/INDEX IF NOT EXISTS,幂等)
+  //
+  // 全新库:members 表还不存在,ensureColumns 是 no-op,接着 schema.sql 创建表 + 索引。
+  const tableExists = (name: string) =>
+    !!(
+      handle
+        .prepare(
+          `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`,
+        )
+        .get(name)
+    );
+  if (tableExists("members")) {
+    ensureColumns(handle, "members", [
+      ["wechat_openid", "TEXT"],
+      ["wechat_unionid", "TEXT"],
+      ["wechat_nickname", "TEXT"],
+      ["wechat_avatar", "TEXT"],
+      ["bound_at", "INTEGER"],
+    ]);
+  }
+
   const sql = fs.readFileSync(SCHEMA_PATH, "utf8");
   handle.exec(sql);
 
   return wrap(handle);
+}
+
+function ensureColumns(
+  handle: Database,
+  table: string,
+  cols: Array<[name: string, type: string]>,
+) {
+  const existing = new Set(
+    (
+      handle.pragma(`table_info(${table})`) as Array<{ name: string }>
+    ).map((r) => r.name),
+  );
+  for (const [name, type] of cols) {
+    if (existing.has(name)) continue;
+    handle.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`);
+  }
 }
 
 function wrap(handle: Database): Db {

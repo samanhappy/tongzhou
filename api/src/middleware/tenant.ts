@@ -15,6 +15,11 @@ import { getDb, requestScope } from "../db/index.js";
 import * as authRepo from "../modules/auth/repo.js";
 import { COOKIE_NAME, verifyJwt } from "../modules/auth/jwt.js";
 import * as tenantsRepo from "../modules/tenants/repo.js";
+import * as membersRepo from "../modules/members/repo.js";
+import {
+  STUDENT_COOKIE,
+  verifyStudentJwt,
+} from "../modules/student-auth/jwt.js";
 
 export type TenantCtx = {
   id: string;
@@ -30,10 +35,17 @@ export type AuthCtx = {
   dev: boolean;
 };
 
+export type StudentCtx = {
+  memberId: string;
+  openid: string;
+  tenantId: string;
+};
+
 declare module "fastify" {
   interface FastifyRequest {
     tenant?: TenantCtx;
     auth?: AuthCtx;
+    student?: StudentCtx;
   }
 }
 
@@ -126,10 +138,26 @@ export function registerTenantHook(app: FastifyInstance) {
           }
         }
         // 学员接口找不到 tenant 不直接挡（让 handler 决定 404/200）
+
+        // 学员 session cookie:有效就 attach req.student,无效静默降级
+        const stCookie = req.cookies?.[STUDENT_COOKIE];
+        if (stCookie && req.tenant) {
+          const payload = await verifyStudentJwt(stCookie);
+          if (payload && payload.tid === req.tenant.id) {
+            // 注意:此处先 attach,真正校验「member 仍在 + openid 一致」推到 PG attachClient 之后,
+            // 这样下面的查询能享受 RLS。
+            req.student = {
+              memberId: payload.sub,
+              openid: payload.oid,
+              tenantId: req.tenant.id,
+            };
+          }
+        }
       }
-      // 注册 / 健康检查 / 直接放行
+      // 注册 / 健康检查 / 微信 dev stub / 直接放行
       else if (
         (pathname.startsWith("/api/tenants") && req.method === "POST") ||
+        pathname.startsWith("/api/wechat/") ||
         PUBLIC_NO_AUTH_PATHS.has(pathname)
       ) {
         // pass
@@ -164,6 +192,18 @@ export function registerTenantHook(app: FastifyInstance) {
         const scope = requestScope.getStore();
         if (scope && pool) {
           await pgHooks.attachClient(pool, scope, tenantId);
+        }
+      }
+
+      // 4. req.student 二次校验:member 仍存在且 openid 一致(任一不满足就降级为匿名)
+      //    放在 PG attachClient 之后,这样查询走 RLS。
+      if (req.student) {
+        const m = await membersRepo.getById(
+          req.student.tenantId,
+          req.student.memberId,
+        );
+        if (!m || m.wechat_openid !== req.student.openid) {
+          req.student = undefined;
         }
       }
     },

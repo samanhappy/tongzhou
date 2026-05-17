@@ -1,7 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
+  addMember,
+  bindStudent,
   bootTestApp,
   createLesson,
+  createMemberInvite,
   createTrack,
   registerOwner,
   responseJson,
@@ -57,21 +60,33 @@ describe("usage recompute and learner progress", () => {
       phase: "ready",
     });
 
+    // 学员需先登录(微信 dev mock)才能写进度 / 心跳
+    const member = await addMember(app, owner.cookie, {
+      name: "Test Student",
+      phone: "13800000001",
+    });
+    const invite = await createMemberInvite(app, owner.cookie, member.id);
+    const student = await bindStudent(app, owner.tenant.slug, {
+      openid: "openid_progress_1",
+      inviteToken: invite.token,
+    });
+
     const firstProgress = await app.inject({
       method: "POST",
       url: `/api/x/${owner.tenant.slug}/progress`,
-      payload: { lessonId: lesson.id, watchedSec: 120, anonToken: "anon-1" },
+      headers: { cookie: student.cookie },
+      payload: { lessonId: lesson.id, watchedSec: 120 },
     });
     expect(firstProgress.statusCode).toBe(200);
 
     const secondProgress = await app.inject({
       method: "POST",
       url: `/api/x/${owner.tenant.slug}/progress`,
+      headers: { cookie: student.cookie },
       payload: {
         lessonId: lesson.id,
         watchedSec: 240,
         completed: true,
-        anonToken: "anon-1",
       },
     });
     expect(secondProgress.statusCode).toBe(200);
@@ -79,7 +94,8 @@ describe("usage recompute and learner progress", () => {
     const heartbeat = await app.inject({
       method: "POST",
       url: `/api/x/${owner.tenant.slug}/heartbeat`,
-      payload: { lessonId: lesson.id, deltaSec: 180, anonToken: "anon-1" },
+      headers: { cookie: student.cookie },
+      payload: { lessonId: lesson.id, deltaSec: 180 },
     });
     expect(heartbeat.statusCode).toBe(200);
 
@@ -88,12 +104,12 @@ describe("usage recompute and learner progress", () => {
       .prepare(
         `SELECT watched_sec, completed
          FROM lesson_progress
-         WHERE tenant_id = ? AND lesson_id = ? AND anon_token = ?`,
+         WHERE tenant_id = ? AND lesson_id = ? AND member_id = ?`,
       )
       .all<{ watched_sec: number; completed: number }>([
         owner.tenant.id,
         lesson.id,
-        "anon-1",
+        member.id,
       ]);
 
     expect(progressRows).toEqual([{ watched_sec: 240, completed: 1 }]);

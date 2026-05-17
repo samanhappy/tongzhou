@@ -15,6 +15,11 @@ export type Member = {
   last_active: string;
   course_count: number;
   playback_minutes: number;
+  wechat_openid: string | null;
+  wechat_unionid: string | null;
+  wechat_nickname: string | null;
+  wechat_avatar: string | null;
+  bound_at: number | null;
   created_at: number;
   updated_at: number;
 };

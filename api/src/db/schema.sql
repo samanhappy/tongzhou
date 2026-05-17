@@ -93,10 +93,36 @@ CREATE TABLE IF NOT EXISTS members (
   last_active         TEXT NOT NULL DEFAULT '',
   course_count        INTEGER NOT NULL DEFAULT 0,
   playback_minutes    INTEGER NOT NULL DEFAULT 0,
+  -- 学员侧微信绑定(V0.5 公众号网页授权)
+  wechat_openid       TEXT,
+  wechat_unionid      TEXT,
+  wechat_nickname     TEXT,
+  wechat_avatar       TEXT,
+  bound_at            INTEGER,
   created_at          INTEGER NOT NULL,
   updated_at          INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_members_tenant ON members(tenant_id);
+-- 同 tenant 下 openid 唯一；NULL 不参与索引
+CREATE UNIQUE INDEX IF NOT EXISTS uq_members_openid
+  ON members(tenant_id, wechat_openid) WHERE wechat_openid IS NOT NULL;
+
+-- 学员邀请链接(创作者侧生成,带学员去微信授权后绑定 openid)
+CREATE TABLE IF NOT EXISTS member_invites (
+  id            TEXT PRIMARY KEY,
+  tenant_id     TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  member_id     TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  token         TEXT NOT NULL,            -- url-safe 32B random
+  created_by    TEXT,                     -- users.id
+  created_at    INTEGER NOT NULL,
+  expires_at    INTEGER NOT NULL,
+  used_at       INTEGER,
+  used_openid   TEXT,
+  revoked_at    INTEGER
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_member_invites_token ON member_invites(token);
+CREATE INDEX IF NOT EXISTS idx_member_invites_tenant_member
+  ON member_invites(tenant_id, member_id);
 
 -- ──────────────────────────────────────────────
 -- 4. 上传 / 视频对象

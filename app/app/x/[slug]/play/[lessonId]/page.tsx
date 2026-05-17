@@ -22,6 +22,14 @@ export default async function StudentPlayer({
 
   const { tenant, lesson, prev, next, watermarkPhone, play, source } = data;
 
+  const playUrl = play.kind === "ok" ? play.playUrl : null;
+  const playMime = play.kind === "ok" ? play.mime : undefined;
+  const lockState =
+    play.kind === "ok" || play.kind === "error" ? null : play.kind;
+  const loginHref = `/x/${slug}/login?next=${encodeURIComponent(
+    `/x/${slug}/play/${lesson.id}`,
+  )}`;
+
   return (
     <div style={{ minHeight: "100%", background: "#0e0e0c", color: "#f0eee9" }}>
       {/* 顶部导航 */}
@@ -84,12 +92,14 @@ export default async function StudentPlayer({
 
       {/* 视频区 */}
       <H5VideoPlayer
-        key={play?.url ?? lesson.id}
-        src={play?.url ?? null}
-        mime={play?.mime}
+        key={playUrl ?? `${lesson.id}:${play.kind}`}
+        src={playUrl}
+        mime={playMime}
         watermarkText={`${watermarkPhone} · ${tenant.name}`}
         posterLabel={`封面 · ${lesson.t}`}
         fallbackDurationText={lesson.d}
+        lockState={lockState}
+        loginHref={loginHref}
       />
 
       {/* 下方内容 */}

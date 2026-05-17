@@ -66,6 +66,7 @@ export type DbDriver = "sqlite" | "postgres";
 export type CacheDriver = "memory" | "redis";
 export type StorageDriver = "local" | "tencent-cos";
 export type VideoDriver = "local" | "tencent-vod";
+export type WechatDriver = "dev" | "real";
 
 export const config = {
   port: num("PORT", 4100),
@@ -119,6 +120,26 @@ export const config = {
       playKey: process.env.VOD_PLAY_KEY,
     },
   },
+
+  wechat: {
+    driver: need(
+      "WECHAT_DRIVER",
+      process.env.NODE_ENV === "production" ? "real" : "dev",
+    ) as WechatDriver,
+    appId: process.env.WECHAT_APP_ID,
+    appSecret: process.env.WECHAT_APP_SECRET,
+    // OAuth 回调 URL 的拼接基址。
+    // dev 默认指向前端域(借 next.config.ts 的 /api/* 反代),
+    // 这样 Set-Cookie 落到与前端页面同源的地方,cookie jar 正常生效;
+    // prod 由部署方设置 https 域名,必须以 https:// 开头。
+    oauthRedirectBase: need(
+      "WECHAT_OAUTH_REDIRECT_BASE",
+      need("PUBLIC_APP_BASE", "http://localhost:3000"),
+    ),
+  },
+
+  // 学员端面向用户的站点基址(创作者侧拼邀请链接、学员登录后回跳)
+  publicAppBase: need("PUBLIC_APP_BASE", "http://localhost:3000"),
 } as const;
 
 export type AppConfig = typeof config;

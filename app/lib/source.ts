@@ -13,6 +13,9 @@ import {
   fetchPublicLanding,
   fetchPublicLesson,
   fetchPublicLessonPlay,
+  fetchStudentMe,
+  type ApiStudentMember,
+  type PlayResult,
   fetchTenant,
   fetchTrack,
   fetchTracks,
@@ -665,20 +668,44 @@ export async function getStudentLanding(
 }
 
 // 学员播放页
+export type StudentMember = {
+  id: string;
+  name: string;
+  phone: string;
+  nickname: string | null;
+  avatar: string | null;
+};
+
 export type StudentLessonData = {
   tenant: Tenant;
   lesson: { id: string; n: number; t: string; d: string; progress?: number };
   prev: { id: string; t: string; status: string } | null;
   next: { id: string; t: string; status: string } | null;
   watermarkPhone: string;
-  play: {
-    url: string;
-    mime: string;
-    durationSec: number | null;
-    expiresAt: number;
-  } | null;
+  play: PlayResult;
+  student: StudentMember | null;
   source: Source;
 };
+
+function toStudentMember(m: ApiStudentMember | null): StudentMember | null {
+  if (!m) return null;
+  return {
+    id: m.id,
+    name: m.name,
+    phone: m.phone,
+    nickname: m.wechat_nickname,
+    avatar: m.wechat_avatar,
+  };
+}
+
+function maskPhone(phone: string | null | undefined): string {
+  if (!phone) return "未登录";
+  if (phone === "—") return "已登录";
+  if (phone.length >= 11) {
+    return `${phone.slice(0, 3)}****${phone.slice(-4)}`;
+  }
+  return phone;
+}
 
 export async function getStudentLesson(
   slug: string,
@@ -686,16 +713,18 @@ export async function getStudentLesson(
 ): Promise<StudentLessonData | null> {
   if (apiEnabled()) {
     try {
-      const [{ tenant }, { lessons }, play] = await Promise.all([
+      const [{ tenant }, { lessons }, play, meRaw] = await Promise.all([
         fetchPublicLesson(slug, lessonId),
         fetchPublicLanding(slug),
         fetchPublicLessonPlay(slug, lessonId),
+        fetchStudentMe(slug),
       ]);
       const idx = lessons.findIndex((l) => l.id === lessonId);
       if (idx < 0) return null;
       const cur = lessons[idx]!;
       const prevL = idx > 0 ? lessons[idx - 1]! : null;
       const nextL = idx < lessons.length - 1 ? lessons[idx + 1]! : null;
+      const me = toStudentMember(meRaw);
       return {
         tenant: {
           slug: tenant.slug,
@@ -712,16 +741,9 @@ export async function getStudentLesson(
         next: nextL
           ? { id: nextL.id, t: nextL.title, status: nextL.status }
           : null,
-        // V0.5 起接公众号 OAuth2 后才有真实手机号,这里给占位
-        watermarkPhone: "138****0000",
-        play: play
-          ? {
-              url: play.playUrl,
-              mime: play.mime,
-              durationSec: play.durationSec,
-              expiresAt: play.expiresAt,
-            }
-          : null,
+        watermarkPhone: me ? maskPhone(me.phone) : "未登录",
+        play,
+        student: me,
         source: "api",
       };
     } catch {
@@ -748,18 +770,23 @@ export async function getStudentLesson(
     prev: prev ? { id: prev.id, t: prev.t, status: prev.status } : null,
     next: next ? { id: next.id, t: next.t, status: next.status } : null,
     watermarkPhone: mockWatermark,
-    play: null,
+    play: { kind: "no_video" },
+    student: null,
     source: "mock",
   };
 }
 
 export async function getStudentMe(slug: string): Promise<{
   tenant: Tenant;
+  member: StudentMember | null;
   source: Source;
 } | null> {
   if (apiEnabled()) {
     try {
-      const { tenant } = await fetchPublicLanding(slug);
+      const [{ tenant }, meRaw] = await Promise.all([
+        fetchPublicLanding(slug),
+        fetchStudentMe(slug),
+      ]);
       return {
         tenant: {
           slug: tenant.slug,
@@ -769,6 +796,7 @@ export async function getStudentMe(slug: string): Promise<{
           groupLink: tenant.group_link ?? "",
           plan: "free",
         },
+        member: toStudentMember(meRaw),
         source: "api",
       };
     } catch {
@@ -776,7 +804,7 @@ export async function getStudentMe(slug: string): Promise<{
     }
   }
   if (slug !== mockTenant.slug) return null;
-  return { tenant: mockTenant, source: "mock" };
+  return { tenant: mockTenant, member: null, source: "mock" };
 }
 
 // 工具：当前 tenant slug（前端路由用）
