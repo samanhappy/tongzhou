@@ -42,6 +42,21 @@ export default function Home() {
       }}
     >
       <div style={{ width: "100%", maxWidth: 720 }}>
+        <Link
+          href="/"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 11,
+            color: "var(--ink-3)",
+            letterSpacing: "0.08em",
+            marginBottom: 18,
+          }}
+        >
+          ← 主站点
+        </Link>
+
         <div
           style={{
             display: "flex",

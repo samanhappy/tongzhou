@@ -45,15 +45,30 @@ function App() {
           </DCArtboard>
         </DCSection>
 
-        {/* ──────────────── 1 · Onboarding 30 分钟 ──────────────── */}
-        <DCSection id="onb" title="① · Onboarding 30 分钟链路" subtitle="V0 DoD：注册 → 上传 → 发布 → 拿到分享链接，≤ 30 min">
+        {/* ──────────────── ① 主站点 marketing ──────────────── */}
+        <DCSection id="site" title="① · 主站点 · tongzhou.app" subtitle="面向独立创作者的公开门面 — 长滚动落地页">
+          <DCArtboard id="site-landing" label="落地页 · 完整滚动" width={1320} height={3760}>
+            <ChromeWindow
+              url="tongzhou.app"
+              tabs={[{ title: "同舟 · 轻量化课程交付" }]}
+              activeIndex={0}
+              width={1320}
+              height={3760}
+            >
+              <TongzhouSite />
+            </ChromeWindow>
+          </DCArtboard>
+        </DCSection>
+
+        {/* ──────────────── ② Onboarding 30 分钟 ──────────────── */}
+        <DCSection id="onb" title="② · Onboarding 30 分钟链路" subtitle="V0 DoD：注册 → 上传 → 发布 → 拿到分享链接，≤ 30 min">
           <DCArtboard id="onb-flow" label="5 步串联" width={1820} height={580}>
             <CreatorOnboarding />
           </DCArtboard>
         </DCSection>
 
         {/* ──────────────── 2 · 学员 H5 ──────────────── */}
-        <DCSection id="h5" title="② · 学员 H5 · 醒春阁" subtitle="V0 极简：3 个页面 — 落地页 / 播放页 / 我的">
+        <DCSection id="h5" title="③ · 学员 H5 · 醒春阁" subtitle="V0 极简：3 个页面 — 落地页 / 播放页 / 我的">
           <DCArtboard id="h5-landing" label="落地页 · 课程目录" width={420} height={900}>
             <PhoneFrame><H5Landing /></PhoneFrame>
           </DCArtboard>
@@ -66,7 +81,7 @@ function App() {
         </DCSection>
 
         {/* ──────────────── 3 · 创作者后台 ──────────────── */}
-        <DCSection id="creator" title="③ · 创作者后台" subtitle="多租户 SaaS · 4 维度计量 · Freemium 配额">
+        <DCSection id="creator" title="④ · 创作者后台" subtitle="多租户 SaaS · 4 维度计量 · Freemium 配额">
           <DCArtboard id="dashboard" label="工作台 · 数据看板" width={1320} height={860}>
             <CreatorDashboard />
           </DCArtboard>
