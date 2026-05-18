@@ -12,7 +12,8 @@ import {
   Sparkline,
 } from "@/components/primitives";
 import { SourceChip } from "@/components/source-chip";
-import { getDashboardData } from "@/lib/source";
+import { CopyShareLinkButton } from "@/components/copy-share-link-button";
+import { getDashboardData, getTenant } from "@/lib/source";
 
 function StatCard({
   label,
@@ -142,18 +143,14 @@ function QuotaRow({
 }
 
 export default async function DashboardPage() {
-  const { stats, quotas, courseWatch, activities, source } =
-    await getDashboardData();
+  const [{ stats, quotas, courseWatch, activities, source }, tenant] =
+    await Promise.all([getDashboardData(), getTenant()]);
 
   return (
     <CreatorShell
       title="今日 · 五月十七"
-      breadcrumb={["醒春阁", "工作台"]}
-      actions={
-        <button className="tz-btn">
-          <I.share size={14} /> 复制本期分享链接
-        </button>
-      }
+      breadcrumb={[tenant.name, "工作台"]}
+      actions={<CopyShareLinkButton slug={tenant.slug} />}
     >
       <div
         style={{
@@ -190,13 +187,6 @@ export default async function DashboardPage() {
             stamp="观"
             title="课程观看 · 近 7 日"
             sub="谁看了什么 · 看了多久"
-            right={
-              <div style={{ display: "flex", gap: 6, fontSize: 11 }}>
-                <span className="tz-chip is-accent">7 日</span>
-                <span className="tz-chip">30 日</span>
-                <span className="tz-chip">本期</span>
-              </div>
-            }
           />
           {courseWatch.length === 0 ? (
             <div

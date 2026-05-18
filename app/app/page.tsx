@@ -103,8 +103,7 @@ const NAV_ITEMS: { label: string; href: string }[] = [
   { label: "产品", href: "#product" },
   { label: "案例", href: "#case" },
   { label: "定价", href: "#pricing" },
-  { label: "文档", href: "/demo" },
-  { label: "更新日志", href: "#faq" },
+  { label: "答疑", href: "#faq" },
 ];
 
 function SiteNav() {
@@ -1310,35 +1309,6 @@ function SitePricing() {
           num="04 · 定 价"
           title="按你能看见的事计费"
           sub="所有方案中，已发布的内容永远可播 — 超额降级仅影响创作者一侧。"
-          right={
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 12, color: "var(--ink-3)" }}>月付</span>
-              <div
-                style={{
-                  width: 36,
-                  height: 20,
-                  borderRadius: 999,
-                  padding: 2,
-                  background: "var(--accent)",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <div
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: 999,
-                    background: "#fff",
-                  }}
-                />
-              </div>
-              <span style={{ fontSize: 12, color: "var(--ink)" }}>
-                年付{" "}
-                <span style={{ color: "var(--accent-deep)" }}>省 2 个月</span>
-              </span>
-            </div>
-          }
         />
 
         <div
@@ -2264,7 +2234,6 @@ function SiteFooter() {
         { label: "30 分钟链路", href: "/onboarding" },
         { label: "学员 H5", href: `/x/${tenant.slug}` },
         { label: "创作者后台", href: "/app/dashboard" },
-        { label: "更新日志", href: "/demo" },
       ],
     },
     {
@@ -2280,19 +2249,14 @@ function SiteFooter() {
       t: "资源",
       l: [
         { label: "开始使用", href: "/register" },
-        { label: "迁移指南", href: "/demo" },
-        { label: "API 文档", href: "/demo" },
-        { label: "状态页", href: "/demo" },
-        { label: "博客", href: "/demo" },
+        { label: "常见问题", href: "#faq" },
       ],
     },
     {
       t: "公司",
       l: [
         { label: "关于同舟", href: "#product" },
-        { label: "招贤纳士 · 1 席", href: "mailto:hello@tongzhou.app" },
         { label: "联系我们", href: "mailto:hello@tongzhou.app" },
-        { label: "媒体素材", href: "mailto:hello@tongzhou.app" },
       ],
     },
   ];
@@ -2404,9 +2368,6 @@ function SiteFooter() {
         >
           <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
             <span>© 2026 同舟 · TONGZHOU</span>
-            <a style={{ cursor: "pointer" }}>隐私</a>
-            <a style={{ cursor: "pointer" }}>服务条款</a>
-            <a style={{ cursor: "pointer" }}>ICP 备 2026-XXXXXX 号</a>
           </div>
           <div
             className="tz-mono"

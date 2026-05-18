@@ -8,7 +8,7 @@ import { CreatorShell } from "@/components/shell";
 import { I } from "@/components/icons";
 import { Bar, SectionLabel } from "@/components/primitives";
 import { SourceChip } from "@/components/source-chip";
-import { getUsageData } from "@/lib/source";
+import { getUsageData, getTenant } from "@/lib/source";
 
 function MeterCard({
   name,
@@ -103,36 +103,25 @@ function MeterCard({
           marginTop: 12,
           paddingTop: 12,
           borderTop: "1px solid var(--paper-line)",
-          display: "flex",
-          justifyContent: "space-between",
           fontSize: 10.5,
           color: "var(--ink-3)",
         }}
       >
-        <span>采样：{sample}</span>
-        <span>本月对账日 6/01</span>
+        采样：{sample}
       </div>
     </div>
   );
 }
 
 export default async function UsagePage() {
-  const { meters, totalPct, source } = await getUsageData();
+  const [{ meters, totalPct, source }, tenant] = await Promise.all([
+    getUsageData(),
+    getTenant(),
+  ]);
   const remaining = Math.max(0, 100 - totalPct);
 
   return (
-    <CreatorShell
-      title="用量计费"
-      breadcrumb={["醒春阁", "运营"]}
-      actions={
-        <>
-          <button className="tz-btn">
-            <I.cloud size={13} /> 重算事件流
-          </button>
-          <button className="tz-btn tz-btn-accent">升级到 Pro</button>
-        </>
-      }
-    >
+    <CreatorShell title="用量计费" breadcrumb={[tenant.name, "运营"]}>
       <div
         style={{
           display: "flex",
@@ -152,7 +141,7 @@ export default async function UsagePage() {
           padding: "20px 22px",
           marginBottom: 22,
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr 1fr 220px",
+          gridTemplateColumns: "1fr 1fr",
           gap: 18,
           alignItems: "center",
         }}
@@ -206,69 +195,6 @@ export default async function UsagePage() {
             距软超额还有 {remaining}%
           </div>
         </div>
-        <div>
-          <div
-            style={{
-              fontSize: 10.5,
-              color: "var(--ink-3)",
-              letterSpacing: "0.08em",
-              marginBottom: 4,
-            }}
-          >
-            预估超额费用
-          </div>
-          <div
-            className="tz-serif"
-            style={{
-              fontSize: 22,
-              fontWeight: 500,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            ¥ 0
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
-            当前在免费额内
-          </div>
-        </div>
-        <div>
-          <div
-            style={{
-              fontSize: 10.5,
-              color: "var(--ink-3)",
-              letterSpacing: "0.08em",
-              marginBottom: 4,
-            }}
-          >
-            下次对账
-          </div>
-          <div className="tz-serif" style={{ fontSize: 22, fontWeight: 500 }}>
-            6 月 1 日
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
-            15 天后
-          </div>
-        </div>
-        <div
-          style={{ borderLeft: "1px solid var(--paper-line)", paddingLeft: 18 }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              color: "var(--ink-2)",
-              marginBottom: 8,
-              lineHeight: 1.5,
-            }}
-          >
-            升级到 <b>Pro</b> 解锁更多额度 + 按量阶梯单价
-          </div>
-          <button
-            className="tz-btn tz-btn-primary"
-            style={{ width: "100%", justifyContent: "center" }}
-          >
-            查看方案
-          </button>
-        </div>
       </div>
 
       <SectionLabel
@@ -300,7 +226,7 @@ export default async function UsagePage() {
       </div>
 
       {/* 降级策略 */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
+      <div>
         <div className="tz-card" style={{ padding: 20 }}>
           <SectionLabel
             stamp="级"
@@ -447,68 +373,6 @@ export default async function UsagePage() {
           </div>
         </div>
 
-        <div className="tz-card" style={{ padding: 18 }}>
-          <SectionLabel title="月账单" />
-          {[
-            { p: "2026-05", st: "draft", amt: "—" },
-            { p: "2026-04", st: "paid", amt: "¥ 0.00" },
-            { p: "2026-03", st: "paid", amt: "¥ 0.00" },
-          ].map((b, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 0",
-                borderTop: i ? "1px solid var(--paper-line)" : "none",
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    fontFamily: "var(--mono)",
-                  }}
-                >
-                  {b.p}
-                </div>
-                <div
-                  style={{
-                    fontSize: 10.5,
-                    color: "var(--ink-3)",
-                    marginTop: 2,
-                  }}
-                >
-                  {b.st === "draft" ? "进行中 · 仍在累计" : "已结清"}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontVariantNumeric: "tabular-nums",
-                    fontWeight: 500,
-                  }}
-                >
-                  {b.amt}
-                </div>
-                {b.st === "paid" && (
-                  <div
-                    style={{
-                      fontSize: 10.5,
-                      color: "var(--ink-3)",
-                      marginTop: 2,
-                    }}
-                  >
-                    查看明细
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </CreatorShell>
   );

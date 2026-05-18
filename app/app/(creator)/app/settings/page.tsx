@@ -27,58 +27,6 @@ export default async function SettingsPage() {
         <SourceChip source={source} />
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 0,
-          marginBottom: 22,
-          borderBottom: "1px solid var(--paper-line)",
-        }}
-      >
-        {[
-          { k: "brand", l: "品牌", active: true },
-          { k: "domain", l: "域名" },
-          { k: "team", l: "团队成员", soon: true },
-          { k: "wechat", l: "微信", soon: true },
-          { k: "api", l: "API Key", soon: true },
-        ].map((t) => (
-          <button
-            key={t.k}
-            className="tz-btn tz-btn-ghost"
-            style={{
-              borderRadius: 0,
-              padding: "8px 14px",
-              color: t.active
-                ? "var(--ink)"
-                : t.soon
-                  ? "var(--ink-4)"
-                  : "var(--ink-3)",
-              borderBottom: t.active
-                ? "2px solid var(--accent)"
-                : "2px solid transparent",
-              marginBottom: -1,
-              fontWeight: t.active ? 500 : 400,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            {t.l}
-            {t.soon && (
-              <span
-                style={{
-                  fontSize: 9.5,
-                  color: "var(--ink-4)",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                V1
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
       <SettingsForm
         initial={{
           slug: tenant.slug,

@@ -83,11 +83,6 @@ export default async function StudentPlayer({
           </div>
         </div>
         <SourceChip source={source} />
-        <button
-          style={{ background: "transparent", border: 0, color: "#f0eee9" }}
-        >
-          <I.share size={16} />
-        </button>
       </div>
 
       {/* 视频区 */}
