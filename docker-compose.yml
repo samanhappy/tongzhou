@@ -4,12 +4,13 @@
 #   docker compose up -d postgres            # 只起数据库
 #   docker compose up -d --build             # 本地构建并启动所有服务
 #
-# 生产（服务器上）：镜像由 GitHub Actions 构建并推送到 TCR
+# 生产（服务器上）：镜像由 GitHub Actions 构建并推送到 GHCR
 #   docker compose pull                      # 拉取最新镜像
 #   docker compose up -d                     # 启动 / 滚动更新
 #   docker compose down -v                   # 干净停掉（连数据卷一起删）
 #
 # IMAGE_TAG 默认为 latest；也可指定具体 sha：IMAGE_TAG=<sha> docker compose pull
+# IMAGE_REPO 默认 ghcr.io/samanhappy；fork 后可在 .env 中覆盖。
 # 生产环境需要在 api/.env 中配置正式参数（参考 api/.env.example）。
 
 services:
@@ -32,7 +33,7 @@ services:
     restart: unless-stopped
 
   api:
-    image: ccr.ccs.tencentyun.com/tongzhou/api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REPO:-ghcr.io/samanhappy}/tongzhou-api:${IMAGE_TAG:-latest}
     build:
       context: ./api
     container_name: tongzhou-api
@@ -49,7 +50,7 @@ services:
     restart: unless-stopped
 
   app:
-    image: ccr.ccs.tencentyun.com/tongzhou/app:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REPO:-ghcr.io/samanhappy}/tongzhou-app:${IMAGE_TAG:-latest}
     build:
       context: ./app
     container_name: tongzhou-app
