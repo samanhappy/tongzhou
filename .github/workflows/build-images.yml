@@ -43,6 +43,8 @@ jobs:
           context: ./${{ matrix.service }}
           platforms: linux/amd64
           push: true
+          provenance: false
+          sbom: false
           tags: |
             ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ matrix.service }}:latest
             ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ matrix.service }}:${{ github.sha }}
